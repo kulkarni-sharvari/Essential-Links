@@ -1,13 +1,24 @@
+/**
+ * This code defines an authentication repository (`AuthRepository`) using TypeORM, which handles user sign-up, login, and logout functionalities in an application
+ */
+
+
 import { hash, compare } from 'bcrypt';
+//  Imports the `sign` function from the `jsonwebtoken` library, used to create JSON Web Tokens (JWTs).
 import { sign } from 'jsonwebtoken';
+// used to create custom repositories
 import { EntityRepository } from 'typeorm';
 import { SECRET_KEY } from '@config';
+// a class  which validates and handle user data when creating a new user.
 import { CreateUserDto } from '@dtos/users.dto';
+// a class which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
+// a class which handles HTTP exceptions
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 
+// Method to creates a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id };
   const expiresIn: number = 60 * 60;
@@ -15,6 +26,7 @@ const createToken = (user: User): TokenData => {
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
 };
 
+// creates a cookie string for storing the JWT
 const createCookie = (tokenData: TokenData): string => {
   return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
 };

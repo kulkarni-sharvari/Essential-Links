@@ -1,11 +1,16 @@
+//  Imports the `hash` function from `bcrypt`, which is used to encrypt passwords before storing them in the database
 import { hash } from 'bcrypt';
+// Imports the `EntityRepository` decorator from TypeORM, which is used to define custom repository classes
 import { EntityRepository } from 'typeorm';
+// Imports the data transfer object
 import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
+// Imports the `UserEntity` class, which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
 import { HttpException } from '@exceptions/httpException';
 import { User } from '@interfaces/users.interface';
 
 @EntityRepository(UserEntity)
+// A class that handles various user-related database operations
 export class UserRepository {
   public async userFindAll(): Promise<User[]> {
     const users: User[] = await UserEntity.find();
