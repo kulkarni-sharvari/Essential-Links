@@ -1,5 +1,5 @@
 // polyfill to add ability to use metadata in TS. i,e Decorator
-import 'reflect-metadata'; 
+import 'reflect-metadata';
 // generate a landing page for GraphQL queries and mutations
 import { ApolloServerPluginLandingPageProductionDefault, ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 //create a GraphQL server
@@ -37,7 +37,7 @@ export class App {
     this.port = PORT || 3000;
 
     this.connectToDatabase();
-    
+
     // set up all middlewares
     this.initializeMiddlewares();
     // initialize the Apollo Server with the provided resolvers
@@ -62,7 +62,7 @@ export class App {
   }
 
   private async connectToDatabase() {
-    await dbConnection();
+    logger.info(`Database Connection status: ${await dbConnection()}`);
   }
 
   private initializeMiddlewares() {
@@ -100,6 +100,7 @@ export class App {
       context: async ({ req }) => {
         try {
           const user = await AuthMiddleware(req);
+
           return { user };
         } catch (error) {
           throw new Error(error);

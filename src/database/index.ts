@@ -3,7 +3,7 @@ import { join } from 'path';
 // createConnection: establish a connection to the database
 // ConnectionOptions: defines the configuration for the database connection
 import { createConnection, ConnectionOptions } from 'typeorm';
- // Imports the PostgreSQL connection details
+// Imports the PostgreSQL connection details
 import { POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB } from '@config';
 
 export const dbConnection = async () => {
@@ -14,7 +14,7 @@ export const dbConnection = async () => {
     host: POSTGRES_HOST,
     port: Number(POSTGRES_PORT),
     database: POSTGRES_DB,
-    // TypeORM will automatically synchronize the database schema with your entities every time you start the application. 
+    // TypeORM will automatically synchronize the database schema with your entities every time you start the application.
     synchronize: true,
     logging: false,
     // Specifies the paths to the entity files (which map database tables to TypeScript classes)
@@ -30,5 +30,5 @@ export const dbConnection = async () => {
     },
   };
 
-  await createConnection(dbConfig);
+  return (await createConnection(dbConfig)).isConnected;
 };
