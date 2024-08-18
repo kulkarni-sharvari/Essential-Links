@@ -100,7 +100,6 @@ export class App {
       context: async ({ req }) => {
         try {
           const user = await AuthMiddleware(req);
-
           return { user };
         } catch (error) {
           throw new Error(error);

@@ -1,16 +1,25 @@
-import { Authorized, Arg, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Authorized, Arg, Ctx, Mutation, Resolver, Query } from 'type-graphql';
 // Imports a class, which defines the structure and validation for user data during signup and login
 import { CreateUserDto } from '@dtos/users.dto';
 // Imports a class, which contains methods for signing up, logging in, and logging out users
 import { AuthRepository } from '@repositories/auth.repository';
 // Imports the `User` type, which defines the structure of a user object
 import { User } from '@typedefs/users.type';
+import { JWTUser, JWTToken } from '@typedefs/jwtuser.type';
 
 // This `AuthResolver` class is a GraphQL resolver that extends the `AuthRepository` class, handling authentication-related operations like signup, login, and logout
 
 //`Resolver`: A decorator used to define a GraphQL resolver class.
 @Resolver()
 export class AuthResolver extends AuthRepository {
+  // Defines a GraphQL query named `getUsers` that returns a list of `User` objects.
+  @Query(() => JWTToken, {
+    description: 'Get JWT Token',
+  })
+  async getToken(@Arg('userData') userData: CreateUserDto): Promise<JWTToken> {
+    return await this.getJWTToken(userData);
+  }
+
   // `Mutation`: A decorator used to define GraphQL mutations, which are operations that modify data
   @Mutation(() => User, {
     description: 'User signup',
@@ -21,12 +30,20 @@ export class AuthResolver extends AuthRepository {
     return user;
   }
 
-  @Mutation(() => User, {
+  @Mutation(() => JWTUser, {
     description: 'User login',
   })
-  async login(@Arg('userData') userData: CreateUserDto): Promise<User> {
-    const { findUser } = await this.userLogIn(userData);
-    return findUser;
+  async login(@Arg('userData') userData: CreateUserDto): Promise<JWTUser> {
+    const { findUser, tokenData } = await this.userLogIn(userData);
+
+    const jwtUser: JWTUser = {
+      userId: findUser?.id,
+      email: findUser?.email,
+      token: tokenData.token,
+      expiresIn: tokenData.expiresIn,
+    };
+
+    return jwtUser;
   }
 
   //  `Authorized()` : A decorator used to protect resolvers, ensuring that only authenticated users can access certain mutations or queries
