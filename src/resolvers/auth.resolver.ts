@@ -13,6 +13,14 @@ import { JWTUser, JWTToken } from '@typedefs/jwtuser.type';
 @Resolver()
 export class AuthResolver extends AuthRepository {
   // Defines a GraphQL query named `getUsers` that returns a list of `User` objects.
+  @Query(() => User, {
+    description: 'Get Current Logged In User',
+  })
+  async getLoggedInUser(@Ctx('user') user: User): Promise<User> {
+    return user;
+  }
+
+  // Defines a GraphQL query named `getUsers` that returns a list of `User` objects.
   @Query(() => JWTToken, {
     description: 'Get JWT Token',
   })
