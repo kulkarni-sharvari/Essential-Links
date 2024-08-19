@@ -62,7 +62,7 @@ export class AuthResolver extends AuthRepository {
 
   //`Ctx`: A decorator used to inject the GraphQL context, which often includes request-related data like the authenticated user
   async logout(@Ctx('user') userData: any): Promise<User> {
-    const user = await this.userLogOut(userData);
+    const user = await this.userLogOut(userData.id);
     return user;
   }
 }
