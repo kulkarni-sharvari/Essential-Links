@@ -91,6 +91,8 @@ export class App {
 
     // Creates a new instance of Apollo Server with the built schema
     const apolloServer = new ApolloServer({
+      cache: 'bounded',
+      persistedQueries: false,
       schema: schema,
       plugins: [
         this.env === 'production'
