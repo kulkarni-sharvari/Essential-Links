@@ -7,12 +7,13 @@ import { AuthResolver } from '@resolvers/auth.resolver';
 import { UserResolver } from '@resolvers/users.resolver';
 // This validates the env variables to ensure that all required variables are set correctly
 import { ValidateEnv } from '@utils/validateEnv';
+import { TeaHarvestsResolver } from './resolvers/harvests.resolver';
 
 ValidateEnv();
 
 // Creates a new instance of the `App` class.
 // provided resolvers will be used by the Apollo Server to handle GraphQL queries and mutations
-const app = new App([AuthResolver, UserResolver]);
+const app = new App([AuthResolver, UserResolver, TeaHarvestsResolver]);
 
 // starts the Express server
 app.listen();
