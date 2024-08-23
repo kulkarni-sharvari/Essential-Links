@@ -26,6 +26,18 @@ export class UserEntity extends BaseEntity implements User {
   password: string;
 
   @Column()
+  @IsNotEmpty()
+  role: string;
+
+  @Column()
+  @IsNotEmpty()
+  location: string;
+
+  @Column()
+  @IsNotEmpty()
+  walletAddress: string;
+
+  @Column()
   // Automatically sets the column to the current date when a new record is created
   @CreateDateColumn()
   createdAt: Date;

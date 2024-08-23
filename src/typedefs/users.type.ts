@@ -10,4 +10,13 @@ export class User {
 
   @Field()
   password: string;
+
+  @Field()
+  role: string;
+
+  @Field()
+  location: string;
+
+  @Field()
+  walletAddress: string;
 }

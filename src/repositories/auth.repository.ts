@@ -18,6 +18,9 @@ import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { JWTToken } from '@/typedefs/jwtuser.type';
 
+import { CreateWallet } from '@/services/createWallet';
+import { WalletEntity } from '@/entities/wallet.entity';
+
 // Method to creates a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id };
@@ -47,10 +50,12 @@ export class AuthRepository {
   public async userSignUp(userData: CreateUserDto): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-
+    const walletObj = new CreateWallet().createUserWallet();
+    console.log(walletObj)
     const hashedPassword = await hash(userData.password, 10);
-    const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword }).save();
-
+    const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword , walletAddress: walletObj.address}).save();
+    console.log(createUserData)
+    await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
     return createUserData;
   }
 

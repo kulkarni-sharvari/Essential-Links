@@ -30,28 +30,29 @@ export class UserResolver extends UserRepository {
   }
 
   // Defines a GraphQL mutation named `createUser` that returns a `User` object.
-  @Mutation(() => User, {
-    description: 'User create',
-  })
-  async createUser(@Arg('userData') userData: CreateUserDto): Promise<User> {
-    const user: User = await this.userCreate(userData);
-    return user;
-  }
+  // @Mutation(() => User, {
+  //   description: 'User create',
+  // })
+  // async createUser(@Arg('userData') userData: CreateUserDto): Promise<User> {
+  //   console.log("came to create user resolver")
+  //   const user: User = await this.userCreate(userData);
+  //   return user;
+  // }
 
-  // Defines a GraphQL mutation named `updateUser` that returns a `User` object.
-  @Mutation(() => User, {
-    description: 'User update',
-  })
-  async updateUser(@Arg('userId') userId: number, @Arg('userData') userData: UpdateUserDto): Promise<User> {
-    const user: User = await this.userUpdate(userId, userData);
-    return user;
-  }
-  // Defines a GraphQL mutation named `deleteUser` that returns a `User` object
-  @Mutation(() => User, {
-    description: 'User delete',
-  })
-  async deleteUser(@Arg('userId') userId: number): Promise<User> {
-    const user: User = await this.userDelete(userId);
-    return user;
-  }
+  // // Defines a GraphQL mutation named `updateUser` that returns a `User` object.
+  // @Mutation(() => User, {
+  //   description: 'User update',
+  // })
+  // async updateUser(@Arg('userId') userId: number, @Arg('userData') userData: UpdateUserDto): Promise<User> {
+  //   const user: User = await this.userUpdate(userId, userData);
+  //   return user;
+  // }
+  // // Defines a GraphQL mutation named `deleteUser` that returns a `User` object
+  // @Mutation(() => User, {
+  //   description: 'User delete',
+  // })
+  // async deleteUser(@Arg('userId') userId: number): Promise<User> {
+  //   const user: User = await this.userDelete(userId);
+  //   return user;
+  // }
 }
