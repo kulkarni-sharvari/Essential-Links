@@ -16,6 +16,10 @@ export class ProcessingEntity extends BaseEntity implements Processing {
 
     @Column()
     @IsNotEmpty()
+    batchId: string;
+
+    @Column()
+    @IsNotEmpty()
     processType: string;
 
     @Column()
