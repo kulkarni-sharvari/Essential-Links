@@ -9,7 +9,7 @@ import { sign } from 'jsonwebtoken';
 import { EntityRepository } from 'typeorm';
 import { SECRET_KEY } from '@config';
 // a class  which validates and handle user data when creating a new user.
-import { CreateUserDto } from '@dtos/users.dto';
+import { CreateUserDto, UserLoginDto } from '@dtos/users.dto';
 // a class which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
 // a class which handles HTTP exceptions
@@ -26,6 +26,7 @@ import { CryptoUtil } from '@/utils/crypto';
 // Method to creates a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id };
+
   const expiresIn: number = 60 * 60;
 
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
@@ -61,7 +62,7 @@ export class AuthRepository {
     return createUserData;
   }
 
-  public async userLogIn(userData: CreateUserDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {
+  public async userLogIn(userData: UserLoginDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
 
@@ -69,7 +70,6 @@ export class AuthRepository {
     if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
 
     const tokenData = createToken(findUser);
-
     const cookie = createCookie(tokenData);
 
     return { cookie, findUser, tokenData };

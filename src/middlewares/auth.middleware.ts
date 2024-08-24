@@ -19,16 +19,19 @@ const getAuthorization = req => {
 export const AuthMiddleware = async req => {
   try {
     const Authorization = getAuthorization(req);
-
+    
     if (Authorization) {
       const { id } = verify(Authorization, SECRET_KEY) as DataStoredInToken;
+      //console.log("id from auth middleware ", id )
       const userRepository = getRepository(UserEntity);
       const findUser = await userRepository.findOne(id, { select: ['id', 'email', 'password'] });
+      //console.log("find user is ", findUser)
       return findUser;
     }
 
     return null;
   } catch (error) {
+    console.log(error.stack)
     throw new HttpException(401, 'Wrong authentication token');
   }
 };

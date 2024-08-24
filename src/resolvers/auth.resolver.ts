@@ -1,6 +1,6 @@
 import { Authorized, Arg, Ctx, Mutation, Resolver, Query } from 'type-graphql';
 // Imports a class, which defines the structure and validation for user data during signup and login
-import { CreateUserDto } from '@dtos/users.dto';
+import { CreateUserDto, UserLoginDto } from '@dtos/users.dto';
 // Imports a class, which contains methods for signing up, logging in, and logging out users
 import { AuthRepository } from '@repositories/auth.repository';
 // Imports the `User` type, which defines the structure of a user object
@@ -41,9 +41,9 @@ export class AuthResolver extends AuthRepository {
   @Mutation(() => JWTUser, {
     description: 'User login',
   })
-  async login(@Arg('userData') userData: CreateUserDto): Promise<JWTUser> {
+  async login(@Arg('userData') userData: UserLoginDto): Promise<JWTUser> {
     const { findUser, tokenData } = await this.userLogIn(userData);
-
+    
     const jwtUser: JWTUser = {
       userId: findUser?.id,
       email: findUser?.email,

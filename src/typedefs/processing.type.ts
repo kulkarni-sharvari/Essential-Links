@@ -4,12 +4,18 @@ import { Field, ObjectType } from 'type-graphql';
 export class Processing {
 
   @Field()
-  harvestId?: string;
+  harvestId: string;
 
   @Field()
-  packagingPlantId: string;
+  packagingPlantId: number;
 
   @Field()
   processType: string;
+
+  @Field({nullable: true})
+  batchId?: string;
+
+  @Field({nullable: true})
+  noOfPackets?: number;
 
 }

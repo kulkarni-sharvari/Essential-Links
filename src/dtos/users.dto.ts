@@ -53,3 +53,18 @@ export class UpdateUserDto implements Partial<User> {
   @MaxLength(32)
   password: string;
 }
+
+@InputType()
+export class UserLoginDto implements Partial<User> {
+
+  @Field()
+  @IsEmail()
+  email: string;
+
+  @Field()
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(9)
+  @MaxLength(32)
+  password: string;
+}

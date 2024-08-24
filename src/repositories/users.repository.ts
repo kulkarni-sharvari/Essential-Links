@@ -8,7 +8,7 @@ import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
 import { UserEntity } from '@entities/users.entity';
 import { HttpException } from '@exceptions/httpException';
 import { User } from '@interfaces/users.interface';
-
+  
 
 @EntityRepository(UserEntity)
 // A class that handles various user-related database operations

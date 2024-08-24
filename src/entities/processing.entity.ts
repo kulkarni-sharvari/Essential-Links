@@ -14,8 +14,7 @@ export class ProcessingEntity extends BaseEntity implements Processing {
     @IsNotEmpty()
     harvestId: string;
 
-    @Column()
-    @IsNotEmpty()
+    @Column({nullable: true})
     batchId: string;
 
     @Column()
@@ -25,6 +24,9 @@ export class ProcessingEntity extends BaseEntity implements Processing {
     @Column()
     @IsNotEmpty()
     packagingPlantId: number;
+
+    @Column({nullable: true})
+    noOfPackets: number;
 
     @Column()
     // Automatically sets the column to the current date when a new record is created

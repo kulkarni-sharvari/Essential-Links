@@ -21,8 +21,17 @@ export class CreateProcessingDto implements Partial<Processing> {
     processType: string;
 
     @Field()
-    @IsString()
     @IsNotEmpty()
-    packagingPlantId: string;
+    packagingPlantId: number;
+
+    // @Field()
+    // @IsString()
+    // @IsNotEmpty()
+    // batchId: string;
+
+    // @Field()
+    // @IsString()
+    // @IsNotEmpty()
+    // noOfPackets: number;
 
 }
