@@ -9,7 +9,7 @@ export class ProcessingResolver extends ProcessingRepository {
      * @param processingInput add to db
      * @returns record inserted in DB
      */
-    @Authorized()
+    @Authorized(["PROCESSING_PLANT"])
     @Mutation(() => Processing, {description: "Creates Processing Details"})
     async createProcessing(@Arg('processing') processingInput: CreateProcessingDto): Promise<Processing> {
         const processing = await this.processingCreate(processingInput);

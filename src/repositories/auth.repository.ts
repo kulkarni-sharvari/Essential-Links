@@ -25,7 +25,7 @@ import { CryptoUtil } from '@/utils/crypto';
 
 // Method to creates a JWT for a user
 const createToken = (user: User): TokenData => {
-  const dataStoredInToken: DataStoredInToken = { id: user.id };
+  const dataStoredInToken: DataStoredInToken = { id: user.id, role: user.role };
 
   const expiresIn: number = 60 * 60;
 

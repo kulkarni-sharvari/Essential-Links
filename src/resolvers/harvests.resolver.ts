@@ -13,7 +13,7 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
      * @param harvestInput takes input to add harvest details in DB
      * @returns record inserted in DB
      */
-    @Authorized()
+    @Authorized(["FARMER"])
     @Mutation(() => TeaHarvests, { description: "Creates Harvests" })
     async createHarvest(@Arg('harvest') harvestInput: TeaHarvestsDto): Promise<TeaHarvests> {
         const harvest = await this.harvestCreate(harvestInput);
