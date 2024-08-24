@@ -1,4 +1,4 @@
-import { ConsignmentDto } from "@/dtos/consignment.dto";
+import { ConsignmentDto, UpdateConsignmentBlockchainDto } from "@/dtos/consignment.dto";
 import { ConsignmentEntity } from "@/entities/consignment.entity";
 import { DBException } from "@/exceptions/DBException";
 import { User } from "@/interfaces/users.interface";
@@ -50,5 +50,35 @@ export class ConsignmentRepository {
     async getAllConsignmentByID(shipmentId: string) {
         logger.info(`Fetching all consignment by ${shipmentId}`)
         return await ConsignmentEntity.find({ where: { shipmentId } })
+    }
+
+    async consignmentBlockchainUpdate(consignment: UpdateConsignmentBlockchainDto) {
+        try {
+            // find if record with {shipmentId} 
+            const allShipments = await this.getAllConsignmentByID(consignment.shipmentId)
+            if (allShipments) {
+                // update the blockchainHash
+                logger.info(`Updating blockchainHash for ${consignment.shipmentId}`)
+                const updateBHash = allShipments.map(shipment => {
+                    return {
+                        ...shipment,
+                        blockchainHash: consignment.blockchainHash
+                    }
+                })
+                await ConsignmentEntity
+                    .createQueryBuilder()
+                    .insert()
+                    .into(ConsignmentEntity)
+                    .values(updateBHash)
+                    .execute()
+            }
+            //return all the records that are updated
+            const allUpdatedShipments = await this.getAllConsignmentByID(consignment.shipmentId)
+            return allUpdatedShipments
+        } catch (error) {
+            logger.error(`ERROR - creating new consignment ${error}`)
+            throw new DBException(500, error)
+        }
+
     }
 }

@@ -1,4 +1,4 @@
-import { ConsignmentDto } from "@/dtos/consignment.dto";
+import { ConsignmentDto, UpdateConsignmentBlockchainDto } from "@/dtos/consignment.dto";
 import { ConsignmentRepository } from "@/repositories/consignment.repository";
 import { Consignment } from "@/typedefs/consignment.type";
 import { User } from "@/typedefs/users.type";
@@ -12,5 +12,13 @@ export class ConsignmentResolver extends ConsignmentRepository {
         const consignment = await this.consignmentCreate(consignments, userData)
         console.log(consignment)
         return consignment
+    }
+
+    @Authorized()
+    @Mutation(() => Consignment, { description: "Update blockchainHash on event - to_be_deleted" })
+    async updateConsignmentBlockchainHash(consignment: UpdateConsignmentBlockchainDto) {
+        const updatedConsignment = await this.consignmentBlockchainUpdate(consignment)
+        console.log(updatedConsignment)
+        return updatedConsignment
     }
 }
