@@ -1,6 +1,8 @@
 import { TeaHarvests } from "@/interfaces/harvests.interface";
 import { IsNotEmpty } from "class-validator";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, ManyToOne, UpdateDateColumn } from "typeorm";
+import { UserEntity } from "./users.entity";
+import { User } from "@/typedefs/users.type";
 
 
 @Entity()
@@ -35,4 +37,7 @@ export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
 
   @Column()
   location: string;
+
+  //@ManyToOne(() => UserEntity, ())
+  
 }

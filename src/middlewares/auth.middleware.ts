@@ -40,6 +40,6 @@ export const AuthCheckerMiddleware: AuthChecker<RequestWithUser> = async ({ cont
   if (!user) {
     throw new HttpException(404, 'Authentication token missing');
   }
-  if (!roles.includes(user.role)) {throw new HttpException(404, `This operation can be done only by ${roles}`);}  // added for rbac
+  if ((roles.length >0) && (!roles.includes(user.role))) {throw new HttpException(404, `This operation can be done only by ${roles}`);}  // added for rbac
   return true;
 };
