@@ -95,6 +95,6 @@ export class UpdateConsignmentEnvDetailsDto implements Partial<Consignment> {
 
   @Field()
   @IsNotEmpty()
-  isTrackChanged: boolean;
+  track: string;
 
 }
