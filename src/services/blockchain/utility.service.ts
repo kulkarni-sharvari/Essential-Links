@@ -29,7 +29,7 @@ export class Utility {
     static async invokeContractPostMethodSigned(contractInstance: any, method: string, payload: any, decryptedWallet: any, contractAddress: string, web3: any){
         logger.info(`invoking invokeContractPostMethodSigned with method ${method} and input ${payload}`)
         try {
-            const contractMethod = contractInstance.methods[method](payload);
+            const contractMethod = contractInstance.methods[method](...payload);
             await this.signAndSendTransaction(decryptedWallet, contractMethod, contractAddress, web3);
             return; 
         } catch (err) {
@@ -53,7 +53,7 @@ export class Utility {
               };
             const signedTx = await web3.eth.accounts.signTransaction(txObject, decryptedWallet.privateKey);
             await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-            return;
+            return; 
         } catch(err) {
             throw err
         }

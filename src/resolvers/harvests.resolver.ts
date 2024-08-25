@@ -4,6 +4,8 @@ import { User } from "@/interfaces/users.interface";
 import { TeaHarvestsRepository } from "@/repositories/harvests.repository";
 import { TeaHarvests } from "@/typedefs/teaHarvests.type";
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { GetWalletInfo } from "@/utils/getWalletInfo";
+import { SimpleStorage } from "@/services/blockchain/simpleStorage.service";
 
 @Resolver()
 export class TeaHarvestsResolver extends TeaHarvestsRepository {
@@ -15,8 +17,13 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
      */
     @Authorized(["FARMER"])
     @Mutation(() => TeaHarvests, { description: "Creates Harvests" })
-    async createHarvest(@Arg('harvest') harvestInput: TeaHarvestsDto): Promise<TeaHarvests> {
+    async createHarvest(@Ctx('user') userData: any, @Arg('harvest') harvestInput: TeaHarvestsDto): Promise<TeaHarvests> {
+        const userWallet = await new GetWalletInfo().createWalletFromId(userData.id)
         const harvest = await this.harvestCreate(harvestInput);
+        console.log("setting value in contract ");
+        await new SimpleStorage().setValue([5], userWallet)
+        console.log("getting value from contract ");
+        console.log(await new SimpleStorage().getValue())
         return harvest;
     }
 
