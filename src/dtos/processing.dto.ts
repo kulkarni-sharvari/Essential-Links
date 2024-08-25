@@ -23,15 +23,27 @@ export class CreateProcessingDto implements Partial<Processing> {
     @Field()
     @IsNotEmpty()
     packagingPlantId: number;
+}
 
-    // @Field()
-    // @IsString()
-    // @IsNotEmpty()
-    // batchId: string;
+@InputType()
+export class CreateBatchDto implements Partial<Processing> {
 
-    // @Field()
-    // @IsString()
-    // @IsNotEmpty()
-    // noOfPackets: number;
+    @Field()
+    @IsString()
+    @IsNotEmpty()
+    harvestId: string;
+
+    @IsString()
+    @IsNotEmpty()
+    batchId: string;
+
+    @IsString()
+    @IsNotEmpty()
+    packetWeight: string;
+
+    @Field()
+    @IsString()
+    @IsNotEmpty()
+    noOfPackets: number;
 
 }
