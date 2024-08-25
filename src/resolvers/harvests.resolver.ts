@@ -16,7 +16,7 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
      * @param harvestInput takes input to add harvest details in DB
      * @returns record inserted in DB
      */
-    @Authorized([[USER_ROLE.FARMER]])
+    @Authorized([USER_ROLE.FARMER])
     @Mutation(() => TeaHarvests, { description: "Creates Harvests" })
     async createHarvest(@Ctx('user') userData: any, @Arg('harvest') harvestInput: TeaHarvestsDto): Promise<TeaHarvests> {
         const userWallet = await new GetWalletInfo().createWalletFromId(userData.id)
@@ -34,7 +34,7 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
      * @param userData gets user details from context
      * @returns updated record of harvest
      */
-    @Authorized([[USER_ROLE.FARMER]])
+    @Authorized([USER_ROLE.FARMER])
     @Mutation(() => TeaHarvests, { description: "Updates blockchainHash value" })
     async updateHarvest(@Arg('harvest') harvestInput: UpdateTeaHarvestsDto, @Ctx('user') userData: User): Promise<TeaHarvests> {
         const updatedHarvest = await this.harvestUpdate(harvestInput, userData);
@@ -46,7 +46,7 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
      * @param user gets user details from context
      * @returns all the harvests done by a farmer
      */
-    @Authorized([[USER_ROLE.FARMER]])
+    @Authorized([USER_ROLE.FARMER])
     @Query(() => [TeaHarvests], { description: "Get all harvests done by a farmer" })
     async getAllHarvestByFarmerId(@Ctx('user') user: User): Promise<TeaHarvests[]> {
         const allHarvests = await this.readAllHarvestByFarmerId(user)
