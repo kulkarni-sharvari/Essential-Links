@@ -8,9 +8,9 @@ import { CARRIER, STATUS_TRACK } from '@/constants';
 
 // Field(): Marks a class property as a GraphQL field, making it accessible in GraphQL queries and mutations
 
-@InputType()
+
 // the class will have fields that partially match the `Consignment` type, though they are optional in the context of `Partial<Consignment>`
-export class ConsignmentDto implements Partial<Consignment> {
+class ConsignmentDto implements Partial<Consignment> {
 
   @Field()
   @IsNotEmpty()
@@ -33,6 +33,13 @@ export class ConsignmentDto implements Partial<Consignment> {
   @Field()
   @IsNotEmpty()
   expectedArrivalDate: Date;
+}
+@InputType()
+export class CreateConsignmentDto {
+
+  @Field(() => [ConsignmentDto])
+  consignment: ConsignmentDto[];
+
 }
 
 
