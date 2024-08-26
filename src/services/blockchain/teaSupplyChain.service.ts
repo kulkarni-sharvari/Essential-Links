@@ -2,7 +2,7 @@ import { logger } from '@/utils/logger';
 import { Utility } from './utility.service';
 import { Web3 } from 'web3';
 import { BESU_URL, CONTRACT_ADDRESS, GAS_LIMIT, SUPPLYCHAIN_ADDRESS, ADMIN_PK } from '@config';
-import * as tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/TeaSupplyChain.json';
+import * as tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/SupplyChain.json';
 import { PROCESSING_STATUS, STATUS_TRACKING, USER_ROLES } from '@/constants/constants';
 
 export class TeaSupplyChain {

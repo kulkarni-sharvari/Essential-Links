@@ -24,6 +24,7 @@ import { AuthMiddleware, AuthCheckerMiddleware } from '@middlewares/auth.middlew
 // custom error-handling middleware
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { logger, responseLogger, errorLogger } from '@utils/logger';
+import { GetEvents } from './services/blockchain/getEvents';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -37,6 +38,7 @@ export class App {
     this.port = PORT || 3000;
 
     this.connectToDatabase();
+    this.startEventListener();
 
     // set up all middlewares
     this.initializeMiddlewares();
@@ -64,6 +66,13 @@ export class App {
   private async connectToDatabase() {
     logger.info(`Database Connection status: ${await dbConnection()}`);
   }
+
+  private async startEventListener() {
+    await new GetEvents().startEventListener();
+    console.log("event listener started ")
+  }
+
+
 
   private initializeMiddlewares() {
     if (this.env === 'production') {
