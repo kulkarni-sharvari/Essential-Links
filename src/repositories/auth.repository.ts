@@ -20,9 +20,9 @@ import { JWTToken } from '@/typedefs/jwtuser.type';
 
 import { CreateWallet } from '@/services/createWallet';
 import { WalletEntity } from '@/entities/wallet.entity';
-
 import { CryptoUtil } from '@/utils/crypto';
 
+import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 // Method to creates a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id, role: user.role };
@@ -55,10 +55,15 @@ export class AuthRepository {
     if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
     const walletObj = new CreateWallet().createUserWallet();
     const hashedPassword = await hash(userData.password, 10);
-    const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey)
-    const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword , walletAddress: walletObj.address}).save();
-    await WalletEntity.create({...walletObj, privateKey: encryptedKey, userId: createUserData.id}).save();
+    const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
+    const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword, walletAddress: walletObj.address }).save();
+    await WalletEntity.create({ ...walletObj, privateKey: encryptedKey, userId: createUserData.id }).save();
     //await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
+    //TODO: call to registerUser function of smart contract
+    //TODO: ROLES mapping to numbers
+    const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), 1);
+    console.log("tx Receipt", res.events.UserRegistered);
+    
     return createUserData;
   }
 

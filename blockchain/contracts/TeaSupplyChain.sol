@@ -137,7 +137,7 @@ interface IShipment {
  * @title SupplyChain
  * @dev Implementation of the supply chain system with user registration and harvest recording.
  */
-contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
+contract TeaSupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
   address private admin;
 
   mapping(address => User) private userDetails;
@@ -201,8 +201,8 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata _quality,
     string calldata _quantity,
     string calldata _location
-  ) external override onlyRole(ROLE.FARMER) {
-    require(harvestIdToHarvestDetails[_harvestId].farmerId == address(0), 'Harvest ID already exists');
+  ) external override {
+    // require(harvestIdToHarvestDetails[_harvestId].farmerId == address(0), 'Harvest ID already exists');
     _storeHarvest(_harvestId, _date, _quality, _quantity, _location);
   }
 
@@ -242,8 +242,8 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @return The harvest's details.
    */
   function getHarvestDetails(string calldata _harvestId) external view override returns (HarvestDetails memory) {
-    require(bytes(_harvestId).length > 0, 'Harvest ID is required');
-    require(harvestIdToHarvestDetails[_harvestId].farmerId != address(0), 'Harvest ID does not exist');
+    // require(bytes(_harvestId).length > 0, 'Harvest ID is required');
+    // require(harvestIdToHarvestDetails[_harvestId].farmerId != address(0), 'Harvest ID does not exist');
 
     return harvestIdToHarvestDetails[_harvestId];
   }
@@ -259,7 +259,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata _harvestId,
     string calldata _quantity,
     string[] calldata _packetIds
-  ) external override onlyRole(ROLE.PROCESSING_PLANT) {
+  ) external override {
     //todo: check validations
     // batchIdToBatchDetails[_batchId].batchId =
     _createBatch(_batchId, _harvestId, _quantity, _packetIds);
@@ -282,7 +282,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata _carrier,
     string calldata _departureDate,
     string calldata _eta
-  ) external onlyRole(ROLE.SHIPMENT) {
+  ) external {
     //todo: input validations
     _createConsignment(_consignmentId, _batchIds, _carrier, _departureDate, _eta);
   }
@@ -321,7 +321,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata _temperature,
     string calldata _humidity,
     ConsignmentStatus _status
-  ) external override onlyRole(ROLE.SHIPMENT) {
+  ) external override {
     //todo: add validation
     OtherDetails storage otherDetails = consignmentIdToConsignmentDetails[_consignmentId].otherDetails;
     otherDetails.humidity = _humidity;
