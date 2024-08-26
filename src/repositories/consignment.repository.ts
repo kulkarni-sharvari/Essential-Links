@@ -1,5 +1,5 @@
 import { STATUS_TRACK } from "@/constants";
-import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDetailsDto, UpdateConsignmentStatusDto } from "@/dtos/consignment.dto";
+import { CreateConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDetailsDto, UpdateConsignmentStatusDto } from "@/dtos/consignment.dto";
 import { ConsignmentEntity } from "@/entities/consignment.entity";
 import { EnvironmentEntity } from "@/entities/environment.entity";
 import { DBException } from "@/exceptions/DBException";
@@ -11,41 +11,41 @@ import uniqid from 'uniqid';
 
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
-    async consignmentCreate(consignments: ConsignmentDto[], userData: User) {
-        logger.info("Creating new consignment")
+    async consignmentCreate(consignments: CreateConsignmentDto, userData) {
+        logger.info("Creating new consignments", consignments, userData)
         // create a unique consignmentID
-        const shipmentId = uniqid()
+        // const shipmentId = uniqid()
 
-        // loop over the consignment[] to create bulk records
-        const newConsignments = consignments.map(consignment => {
-            return {
-                shipmentId,
-                batchId: consignment.batchId,
-                storagePlantId: userData.id,
-                carrier: consignment.carrier,
-                status: consignment.status,
-                departureDate: consignment.departureDate,
-                expectedArrivalDate: consignment.expectedArrivalDate
-            }
-        })
-        try {
+        // // loop over the consignment[] to create bulk records
+        // const newConsignments = consignments.map(consignment => {
+        //     return {
+        //         shipmentId,
+        //         batchId: consignment.batchId,
+        //         storagePlantId: userData.id,
+        //         carrier: consignment.carrier,
+        //         status: consignment.status,
+        //         departureDate: consignment.departureDate,
+        //         expectedArrivalDate: consignment.expectedArrivalDate
+        //     }
+        // })
+        // try {
             // bulk insert into DB 
-            await ConsignmentEntity
-                .createQueryBuilder()
-                .insert()
-                .into(ConsignmentEntity)
-                .values(newConsignments)
-                .execute()
-            logger.info("Created new consignment")
-            // query DB with said {shipmentId}
-            const allShipments = await this.getAllConsignmentByID(shipmentId)
-            // return all records with {shipmentId}
-            logger.info("Returning new consignment")
-            return allShipments
-        } catch (error) {
-            logger.error(`ERROR - creating new consignment ${error}`)
-            throw new DBException(500, error)
-        }
+            // await ConsignmentEntity
+            //     .createQueryBuilder()
+            //     .insert()
+            //     .into(ConsignmentEntity)
+            //     .values(newConsignments)
+            //     .execute()
+            // logger.info("Created new consignment")
+            // // query DB with said {shipmentId}
+            // const allShipments = await this.getAllConsignmentByID(shipmentId)
+            // // return all records with {shipmentId}
+            // logger.info("Returning new consignment")
+            // return allShipments
+        // } catch (error) {
+        //     logger.error(`ERROR - creating new consignment ${error}`)
+        //     // throw new DBException(500, error)
+        // }
 
     }
 
