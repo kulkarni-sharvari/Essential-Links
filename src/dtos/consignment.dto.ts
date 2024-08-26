@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { InputType, Field } from 'type-graphql';
-import { Consignment } from '@/interfaces/consignment.interface';
+import { Consignment } from '@/typedefs/consignment.type';
 import { CARRIER, STATUS_TRACK } from '@/constants';
 
 
@@ -10,7 +10,8 @@ import { CARRIER, STATUS_TRACK } from '@/constants';
 
 
 // the class will have fields that partially match the `Consignment` type, though they are optional in the context of `Partial<Consignment>`
-class ConsignmentDto implements Partial<Consignment> {
+@InputType()
+export class ConsignmentDto implements Partial<Consignment> {
 
   @Field()
   @IsNotEmpty()
@@ -34,13 +35,14 @@ class ConsignmentDto implements Partial<Consignment> {
   @IsNotEmpty()
   expectedArrivalDate: Date;
 }
-@InputType()
-export class CreateConsignmentDto {
 
-  @Field(() => [ConsignmentDto])
-  consignment: ConsignmentDto[];
+// @InputType()
+// export class CreateConsignmentDto {
 
-}
+//   @Field(() => [ConsignmentDto])
+//   consignment: ConsignmentDto[];
+
+// }
 
 
 @InputType()
