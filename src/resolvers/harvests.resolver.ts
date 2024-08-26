@@ -22,9 +22,10 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
         const userWallet = await new GetWalletInfo().createWalletFromId(userData.id)
         const harvest = await this.harvestCreate(harvestInput);
         console.log("setting value in contract ");
+
         await new SimpleStorage().setValue([5], userWallet)
         console.log("getting value from contract ");
-        console.log(await new SimpleStorage().getValue())
+        console.log("Get Value Response from Smart Contract: ", await new SimpleStorage().getValue())
         return harvest;
     }
 

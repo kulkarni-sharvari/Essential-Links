@@ -29,7 +29,7 @@ export class UserResolver extends UserRepository {
     return user;
   }
 
-  // Defines a GraphQL mutation named `createUser` that returns a `User` object.
+  // // Defines a GraphQL mutation named `createUser` that returns a `User` object.
   // @Mutation(() => User, {
   //   description: 'User create',
   // })
