@@ -51,20 +51,27 @@ export class AuthRepository {
     return tokenData;
   }
   public async userSignUp(userData: CreateUserDto): Promise<User> {
-    const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
-    if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-    const walletObj = new CreateWallet().createUserWallet();
-    const hashedPassword = await hash(userData.password, 10);
-    const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
-    const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword, walletAddress: walletObj.address }).save();
-    await WalletEntity.create({ ...walletObj, privateKey: encryptedKey, userId: createUserData.id }).save();
-    //await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
-    //TODO: call to registerUser function of smart contract
-    //TODO: ROLES mapping to numbers
-    const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), createUserData.role);
-    console.log("tx Receipt", res.events.UserRegistered);
+    try {
+      
+      const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
+      
+      if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
+      const walletObj = new CreateWallet().createUserWallet();
+      const hashedPassword = await hash(userData.password, 10);
+      const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
+      const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword, walletAddress: walletObj.address }).save();
+      await WalletEntity.create({ ...walletObj, privateKey: encryptedKey, userId: createUserData.id }).save();
+      //await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
+      //TODO: call to registerUser function of smart contract
+      //TODO: ROLES mapping to numbers
+      // console.log("User Data", userData);
+      const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
+      console.log("tx Receipt", res.events.UserRegistered);
+      return createUserData;
+    } catch (error) {
+      
+    }
     
-    return createUserData;
   }
 
   public async userLogIn(userData: UserLoginDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {

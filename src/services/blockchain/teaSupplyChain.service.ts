@@ -3,7 +3,7 @@ import { Utility } from './utility.service';
 import { Web3 } from 'web3';
 import { BESU_URL, CONTRACT_ADDRESS, GAS_LIMIT, SUPPLYCHAIN_ADDRESS, ADMIN_PK } from '@config';
 import * as tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/TeaSupplyChain.json';
-import { PROCESSING_STATUS, USER_ROLES } from '@/constants/constants';
+import { PROCESSING_STATUS, STATUS_TRACKING, USER_ROLES } from '@/constants/constants';
 
 export class TeaSupplyChain {
   web3: any;
@@ -37,7 +37,7 @@ export class TeaSupplyChain {
       this.currentUserAddress = account.address;
       return this.contractInstance;
     } catch (error) {
-      logger.error(`Exception occurred in simpleStorage.getContractInstance method :: ${error.stack}`);
+      logger.error(`Exception occurred in TeaSupplyChain.getContractInstance method :: ${error.stack}`);
       throw error;
     }
   }
@@ -61,11 +61,13 @@ export class TeaSupplyChain {
       const contractInstance = this.getContractInstance(ADMIN_PK);
       const userRole = USER_ROLES[role];
       const payload = [accountAddress, userId, userRole];
+
       const res = await Utility.invokeContractPostMethod(contractInstance, 'registerUser', payload, this.currentUserAddress);
       this.clearUserAccount();
       return res;
     } catch (err) {
-      logger.error(`Exception in simpleStorage.getValue method: ${err.stack}`);
+      logger.error(`Exception in TeaSupplyChain.registerUser method: ${err.stack}`);
+
       throw err;
     }
   }
@@ -79,7 +81,8 @@ export class TeaSupplyChain {
       this.clearUserAccount();
       return res;
     } catch (err) {
-      logger.error(`Exception in simpleStorage.getValue method: ${err.stack}`);
+      logger.error(`Exception in TeaSupplyChain.recordHarvest method: ${err.stack}`);
+
       throw err;
     }
   }
@@ -94,7 +97,8 @@ export class TeaSupplyChain {
       this.clearUserAccount();
       return res;
     } catch (err) {
-      logger.error(`Exception in simpleStorage.getValue method: ${err.stack}`);
+      logger.error(`Exception in TeaSupplyChain.recordProcessing method: ${err.stack}`);
+
       throw err;
     }
   }
@@ -109,7 +113,44 @@ export class TeaSupplyChain {
       this.clearUserAccount();
       return res;
     } catch (err) {
-      logger.error(`Exception in simpleStorage.getValue method: ${err.stack}`);
+      logger.error(`Exception in TeaSupplyChain.createBatch method: ${err.stack}`);
+      throw err;
+    }
+  }
+
+  public async createConsignment(
+    consignmentId: string,
+    batchIds: string[],
+    carrier: string,
+    departureDate: string,
+    eta: string,
+    callerAccountKey: string,
+  ) {
+    try {
+      //TODO:
+      const contractInstance = this.getContractInstance(callerAccountKey);
+
+      const payload = [consignmentId, batchIds, carrier, departureDate, eta];
+      const res = await Utility.invokeContractPostMethod(contractInstance, 'createConsignment', payload, this.currentUserAddress);
+      this.clearUserAccount();
+      return res;
+    } catch (err) {
+      logger.error(`Exception in TeaSupplyChain.createConsignment method: ${err.stack}`);
+      throw err;
+    }
+  }
+
+  public async updateConsignment(consignmentId: string, temprature: string, humidity: string, status: string, callerAccountKey: string) {
+    try {
+      //TODO:
+      const contractInstance = this.getContractInstance(callerAccountKey);
+      const consignmentStatus = STATUS_TRACKING[status];
+      const payload = [consignmentId, temprature, humidity, consignmentStatus];
+      const res = await Utility.invokeContractPostMethod(contractInstance, 'updateConsignment', payload, this.currentUserAddress);
+      this.clearUserAccount();
+      return res;
+    } catch (err) {
+      logger.error(`Exception in TeaSupplyChain.updateConsignment method: ${err.stack}`);
       throw err;
     }
   }

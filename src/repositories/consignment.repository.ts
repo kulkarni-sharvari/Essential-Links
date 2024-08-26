@@ -11,7 +11,8 @@ import uniqid from 'uniqid';
 
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
-    async consignmentCreate(consignments: ConsignmentDto[], userData) {
+    //TODO:
+    async consignmentCreate(consignments: ConsignmentDto[], userData:any, walletData:any) {
         logger.info("Creating new consignments", consignments, userData)
         // create a unique consignmentID
         const shipmentId = uniqid()
@@ -24,8 +25,8 @@ export class ConsignmentRepository {
                 storagePlantId: userData.id,
                 carrier: consignment.carrier,
                 status: consignment.status,
-                departureDate: consignment.departureDate,
-                expectedArrivalDate: consignment.expectedArrivalDate
+                departureDate: new Date(consignment.departureDate),
+                expectedArrivalDate: new Date(consignment.expectedArrivalDate)
             }
         })
         try {
@@ -40,7 +41,12 @@ export class ConsignmentRepository {
             // query DB with said {shipmentId}
             const allShipments = await this.getAllConsignmentByID(shipmentId)
             // return all records with {shipmentId}
-            logger.info("Returning new consignment")
+
+            //TODO: Call to blockchain
+
+
+
+            logger.info("Returning new consignment", allShipments)
             return allShipments
         } catch (error) {
             logger.error(`ERROR - creating new consignment ${error}`)
