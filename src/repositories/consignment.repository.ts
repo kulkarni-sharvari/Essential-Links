@@ -11,8 +11,8 @@ import uniqid from 'uniqid';
 
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
-    async consignmentCreate(consignments: ConsignmentDto[], userData: User) {
-        logger.info("Creating new consignment")
+    async consignmentCreate(consignments: ConsignmentDto[], userData) {
+        logger.info("Creating new consignments", consignments, userData)
         // create a unique consignmentID
         const shipmentId = uniqid()
 
@@ -29,7 +29,7 @@ export class ConsignmentRepository {
             }
         })
         try {
-            // bulk insert into DB 
+            // bulk insert into DB
             await ConsignmentEntity
                 .createQueryBuilder()
                 .insert()
@@ -44,7 +44,7 @@ export class ConsignmentRepository {
             return allShipments
         } catch (error) {
             logger.error(`ERROR - creating new consignment ${error}`)
-            throw new DBException(500, error)
+            // throw new DBException(500, error)
         }
 
     }
