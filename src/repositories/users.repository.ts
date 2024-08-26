@@ -8,6 +8,7 @@ import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
 import { UserEntity } from '@entities/users.entity';
 import { HttpException } from '@exceptions/httpException';
 import { User } from '@interfaces/users.interface';
+  
 
 @EntityRepository(UserEntity)
 // A class that handles various user-related database operations
@@ -28,10 +29,11 @@ export class UserRepository {
   public async userCreate(userData: CreateUserDto): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-
+    console.log("before creating wqallet address")
+   console.log("Password", userData.password)
     const hashedPassword = await hash(userData.password, 10);
     const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword }).save();
-
+    
     return createUserData;
   }
 

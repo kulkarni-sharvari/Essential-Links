@@ -6,12 +6,13 @@ require('@nomicfoundation/hardhat-toolbox');
 module.exports = {
   // defaultNetwork: "hardhat",
   networks: {
-    ganache: {
-      url: 'http://127.0.0.1:8545',
-      chainId: 1337,
-      gas: 12000000,
-      blockGasLimit: 0x1fffffffffffff,
-      allowUnlimitedContractSize: true,
+    besuVM: {
+      url: 'http://localhost:8545',
+      // chainId: 1337,
+      accounts: ["0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"],
+      // gas: 12000000,
+      // blockGasLimit: 0x1fffffffffffff,
+      // allowUnlimitedContractSize: true,
       timeout: 1800000,
       // Mnemonic: "abstract enter mesh model risk any debate aunt portion spawn soul tell"
     },
@@ -20,8 +21,9 @@ module.exports = {
     },
   },
   solidity: {
-    version: '0.8.24',
+    version: '0.8.26',
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
         runs: 200,

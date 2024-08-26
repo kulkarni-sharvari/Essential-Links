@@ -1,10 +1,11 @@
 // This decorator ensures that a field is not empty.
 import { IsNotEmpty } from 'class-validator';
 // Imports various decorators and classes from `typeorm`
-import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 // Imports the `User` interface
 import { User } from '@interfaces/users.interface';
+import { TeaHarvestsEntity } from './harvests.entity';
 
 // `BaseEntity`: Provides base methods for interacting with the database (e.g., `save`, `remove`)
 
@@ -26,6 +27,18 @@ export class UserEntity extends BaseEntity implements User {
   password: string;
 
   @Column()
+  @IsNotEmpty()
+  role: string;
+
+  @Column()
+  @IsNotEmpty()
+  location: string;
+
+  @Column()
+  @IsNotEmpty()
+  walletAddress: string;
+
+  @Column()
   // Automatically sets the column to the current date when a new record is created
   @CreateDateColumn()
   createdAt: Date;
@@ -34,4 +47,7 @@ export class UserEntity extends BaseEntity implements User {
   // Automatically updates the column to the current date whenever the record is updated
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // @OneToMany(() => TeaHarvestsEntity, (teaHarvest: TeaHarvestsEntity) => teaHarvest.userId)
+  // teaHarvestEntity: TeaHarvestsEntity[]
 }

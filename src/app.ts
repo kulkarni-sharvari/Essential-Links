@@ -102,6 +102,7 @@ export class App {
       context: async ({ req }) => {
         try {
           const user = await AuthMiddleware(req);
+          //const role = user.role // added for rbac
           return { user };
         } catch (error) {
           throw new Error(error);

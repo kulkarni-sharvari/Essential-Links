@@ -9,5 +9,11 @@ export class User {
   email?: string;
 
   @Field()
-  password: string;
+  role: string;
+
+  @Field()
+  location: string;
+
+  @Field()
+  walletAddress: string;
 }
