@@ -61,7 +61,7 @@ export class AuthRepository {
     //await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
     //TODO: call to registerUser function of smart contract
     //TODO: ROLES mapping to numbers
-    const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), 1);
+    const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), createUserData.role);
     console.log("tx Receipt", res.events.UserRegistered);
     
     return createUserData;

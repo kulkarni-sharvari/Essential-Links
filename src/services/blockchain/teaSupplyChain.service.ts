@@ -3,6 +3,7 @@ import { Utility } from './utility.service';
 import { Web3 } from 'web3';
 import { BESU_URL, CONTRACT_ADDRESS, GAS_LIMIT, SUPPLYCHAIN_ADDRESS, ADMIN_PK } from '@config';
 import * as tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/TeaSupplyChain.json';
+import { PROCESSING_STATUS, USER_ROLES } from '@/constants/constants';
 
 export class TeaSupplyChain {
   web3: any;
@@ -55,10 +56,11 @@ export class TeaSupplyChain {
    * @param adminAccountKey
    * @returns
    */
-  public async registerUser(accountAddress: string, userId: string, role: number) {
+  public async registerUser(accountAddress: string, userId: string, role: string) {
     try {
       const contractInstance = this.getContractInstance(ADMIN_PK);
-      const payload = [accountAddress, userId, role];
+      const userRole = USER_ROLES[role];
+      const payload = [accountAddress, userId, userRole];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'registerUser', payload, this.currentUserAddress);
       this.clearUserAccount();
       return res;
@@ -74,6 +76,36 @@ export class TeaSupplyChain {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [harvestId, harvestDate, quality, quantity, location];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordHarvest', payload, this.currentUserAddress);
+      this.clearUserAccount();
+      return res;
+    } catch (err) {
+      logger.error(`Exception in simpleStorage.getValue method: ${err.stack}`);
+      throw err;
+    }
+  }
+  public async recordProcessing(harvestId: string, processingStatus: string, callerAccountKey: string) {
+    try {
+      //TODO:
+      const contractInstance = this.getContractInstance(callerAccountKey);
+      const status = PROCESSING_STATUS[processingStatus];
+
+      const payload = [harvestId, status];
+      const res = await Utility.invokeContractPostMethod(contractInstance, 'recordProcessing', payload, this.currentUserAddress);
+      this.clearUserAccount();
+      return res;
+    } catch (err) {
+      logger.error(`Exception in simpleStorage.getValue method: ${err.stack}`);
+      throw err;
+    }
+  }
+
+  public async createBatch(harvestId: string, batchId: string, quantity: string, packetIds: string[], callerAccountKey: string) {
+    try {
+      //TODO:
+      const contractInstance = this.getContractInstance(callerAccountKey);
+
+      const payload = [harvestId, batchId, quantity, packetIds];
+      const res = await Utility.invokeContractPostMethod(contractInstance, 'createBatch', payload, this.currentUserAddress);
       this.clearUserAccount();
       return res;
     } catch (err) {

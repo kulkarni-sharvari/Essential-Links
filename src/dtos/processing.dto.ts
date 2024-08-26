@@ -8,42 +8,38 @@ import { PROCESSING_TYPES } from '@/constants';
 
 @InputType()
 export class CreateProcessingDto implements Partial<Processing> {
+  @Field()
+  @IsString()
+  @IsNotEmpty()
+  harvestId: string;
 
-    @Field()
-    @IsString()
-    @IsNotEmpty()
-    harvestId: string;
+  @Field()
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(PROCESSING_TYPES, { message: 'Process Type must be one of WITHERING, ROLLING, FERMENTING, DRYING, SORTING, PACKED' })
+  processType: string;
 
-    @Field()
-    @IsString()
-    @IsNotEmpty()
-    @IsEnum(PROCESSING_TYPES, { message: 'Process Type must be one of WITHERING, ROLLING, FERMENTING, DRYING, SORTING, PACKED' })
-    processType: string;
-
-    @Field()
-    @IsNotEmpty()
-    packagingPlantId: number;
+  @Field()
+  @IsNotEmpty()
+  packagingPlantId: number;
 }
 
 @InputType()
 export class CreateBatchDto implements Partial<Processing> {
+  @Field()
+  @IsString()
+  @IsNotEmpty()
+  harvestId: string;
 
-    @Field()
-    @IsString()
-    @IsNotEmpty()
-    harvestId: string;
+  @IsString()
+  @IsNotEmpty()
+  batchId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    batchId: string;
+  @IsString()
+  @IsNotEmpty()
+  packetWeight: string;
 
-    @IsString()
-    @IsNotEmpty()
-    packetWeight: string;
-
-    @Field()
-    @IsString()
-    @IsNotEmpty()
-    noOfPackets: number;
-
+  @Field()
+  @IsNotEmpty()
+  noOfPackets: number;
 }

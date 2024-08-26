@@ -5,4 +5,5 @@ export interface Processing {
     processType: string;
     batchId?: string;
     noOfPackets?: number;
+    packetWeight?:string;
 }

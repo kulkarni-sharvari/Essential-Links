@@ -18,4 +18,7 @@ export class Processing {
   @Field({nullable: true})
   noOfPackets?: number;
 
+  @Field({nullable: true})
+  packetWeight?: string;
+
 }

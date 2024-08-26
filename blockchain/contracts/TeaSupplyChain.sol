@@ -34,7 +34,6 @@ interface IFarmer {
  */
 interface IUser {
   enum ROLE {
-    ADMIN,
     FARMER,
     PROCESSING_PLANT,
     SHIPMENT,
