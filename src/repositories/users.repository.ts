@@ -6,7 +6,7 @@ import { EntityRepository } from 'typeorm';
 import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
 // Imports the `UserEntity` class, which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
-import { HttpException } from '@exceptions/httpException';
+import { HttpException } from '@exceptions/HttpException';
 import { User } from '@interfaces/users.interface';
   
 

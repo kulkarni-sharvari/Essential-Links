@@ -13,7 +13,7 @@ import { CreateUserDto, UserLoginDto } from '@dtos/users.dto';
 // a class which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
 // a class which handles HTTP exceptions
-import { HttpException } from '@exceptions/httpException';
+import { HttpException } from '@exceptions/HttpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { JWTToken } from '@/typedefs/jwtuser.type';

@@ -3,7 +3,7 @@ import { AuthChecker } from 'type-graphql';
 import { getRepository } from 'typeorm';
 import { SECRET_KEY } from '@config';
 import { UserEntity } from '@entities/users.entity';
-import { HttpException } from '@exceptions/httpException';
+import { HttpException } from '@exceptions/HttpException';
 import { RequestWithUser, DataStoredInToken } from '@interfaces/auth.interface';
 
 const getAuthorization = req => {
