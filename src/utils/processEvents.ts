@@ -38,7 +38,10 @@ export class ProcessEvents {
             default:
                 break;
                 
-        }
+        }   
+        console.log("txn hash ", txnHash);
+        console.log(eventData)
+        console.log(eventName)
 
         await EventEntity.create({
             eventDetails: eventData, 
@@ -46,5 +49,7 @@ export class ProcessEvents {
             blockchainHash: txnHash
         }).save()
     }
+
+
 
 }
