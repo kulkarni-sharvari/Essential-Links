@@ -57,11 +57,6 @@ logger.add(
   }),
 );
 
-export const responseLogger = request => {
-  const { query } = request.request;
-  // logger.info(query);
-};
-
 export const errorLogger = error => {
   const { validationErrors } = error.extensions.exception;
 

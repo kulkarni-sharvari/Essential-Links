@@ -1,9 +1,6 @@
-import { TeaHarvests } from "@/interfaces/harvests.interface";
-import { IsNotEmpty } from "class-validator";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, ManyToOne, UpdateDateColumn } from "typeorm";
-import { UserEntity } from "./users.entity";
-import { User } from "@/typedefs/users.type";
-
+import { TeaHarvests } from '@/interfaces/harvests.interface';
+import { IsNotEmpty } from 'class-validator';
+import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
@@ -32,12 +29,9 @@ export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   blockchainHash: string;
 
   @Column()
   location: string;
-
-  //@ManyToOne(() => UserEntity, ())
-  
 }

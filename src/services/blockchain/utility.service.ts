@@ -2,34 +2,40 @@ import { GAS_LIMIT } from '@/config';
 import { logger } from '@/utils/logger';
 
 export class Utility {
-  static async invokeContractGetMethod(contractInstance: any, method: string, payload: any) {
-    logger.info(`invoking invokeContractGetMethod with method ${method} and input ${payload}`);
+  static async invokeContractGetMethod(contractInstance: any, method: string, payload: any = null): Promise<string> {
+    logger.info(`Invoking invokeContractGetMethod with method: ${method} and input: ${JSON.stringify(payload)}`);
     try {
       let contractResponse;
+
       if (payload === null || payload === undefined) {
-        // added this if clause for simple storage getValue call
         contractResponse = await contractInstance.methods[method]().call();
       } else {
-        contractResponse = await contractInstance.methods[method](payload).call();
+        contractResponse = await contractInstance.methods[method](...payload).call();
       }
 
       return contractResponse.toString();
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      logger.error(`Error in invokeContractGetMethod for method: ${method} with payload: ${JSON.stringify(payload)} - ${error.message}`);
+      throw error; // Re-throw the error to be handled by the caller
     }
   }
 
-  static async invokeContractPostMethod(contractInstance: any, method: string, payload: any, senderAddress: string) {
-    logger.info(`invoking invokeContractPostMethodWithoutSigning with method ${method} and input ${payload}`);
+  static async invokeContractPostMethod(contractInstance: any, method: string, payload: any[], senderAddress: string): Promise<any> {
+    logger.info(`Invoking invokeContractPostMethod with method: ${method} and input: ${JSON.stringify(payload)} from sender: ${senderAddress}`);
     try {
-      // TODO:
       const txObject = {
         from: senderAddress,
         gas: GAS_LIMIT,
       };
+
       return await contractInstance.methods[method](...payload).send(txObject);
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      logger.error(
+        `Error in invokeContractPostMethod for method: ${method} with payload: ${JSON.stringify(payload)} from sender: ${senderAddress} - ${
+          error.message
+        }`,
+      );
+      throw error; // Re-throw the error to be handled by the caller
     }
   }
 }

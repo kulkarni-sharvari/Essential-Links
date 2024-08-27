@@ -1,10 +1,9 @@
 import { USER_ROLE } from '@/constants';
 import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDetailsDto, UpdateConsignmentStatusDto } from '@/dtos/consignment.dto';
-import { TeaHarvestsDto } from '@/dtos/teaHarvests.dto';
 import { ConsignmentRepository } from '@/repositories/consignment.repository';
 import { Consignment } from '@/typedefs/consignment.type';
 import { GetWalletInfo } from '@/utils/getWalletInfo';
-import { Arg, Args, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 
 @Resolver()
 export class ConsignmentResolver extends ConsignmentRepository {
@@ -14,7 +13,7 @@ export class ConsignmentResolver extends ConsignmentRepository {
   async createConsignment(@Ctx('user') userData: any, @Arg('consignments', type => [ConsignmentDto]) consignments: ConsignmentDto[]) {
     const userWallet = await new GetWalletInfo().createWalletFromId(userData.id);
     const consignment = await this.consignmentCreate(consignments, userData, userWallet);
-    return consignment
+    return consignment;
   }
 
   @Authorized([USER_ROLE.SHIPMENT_COMPANY])
