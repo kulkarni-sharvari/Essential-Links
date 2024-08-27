@@ -90,8 +90,7 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const status = PROCESSING_STATUS[processingStatus];
-      const payload = [harvestId, status];
-
+      const payload = [harvestId.toString(), status];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordProcessing', payload, this.currentUserAddress);
       this.clearUserAccount();
       return res;
@@ -127,11 +126,10 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [consignmentId, batchIds, carrier, departureDate, eta];
-
       const res = await Utility.invokeContractPostMethod(contractInstance, 'createConsignment', payload, this.currentUserAddress);
       this.clearUserAccount();
 
-      return res;
+      // return res;
     } catch (error) {
       logger.error(`Error in createConsignment: ${error.message}`);
       throw error;

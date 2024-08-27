@@ -2,6 +2,7 @@ import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDet
 import { ConsignmentEntity } from '@/entities/consignment.entity';
 import { EnvironmentEntity } from '@/entities/environment.entity';
 import { DBException } from '@/exceptions/DBException';
+import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
@@ -9,21 +10,19 @@ import uniqid from 'uniqid';
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
   //TODO:
-  async consignmentCreate(consignments: ConsignmentDto[], userData: any, walletData: any) {
-    logger.info('Creating new consignments', consignments, userData);
-    // create a unique consignmentID
+  async consignmentCreate(consignments: ConsignmentDto, userData: any, walletData: any) {
     const shipmentId = uniqid();
 
     // loop over the consignment[] to create bulk records
-    const newConsignments = consignments.map(consignment => {
+    const newConsignments = consignments.batchId.map(consignment => {
       return {
         shipmentId,
-        batchId: consignment.batchId,
+        batchId: consignment,
         storagePlantId: userData.id,
-        carrier: consignment.carrier,
-        status: consignment.status,
-        departureDate: new Date(consignment.departureDate),
-        expectedArrivalDate: new Date(consignment.expectedArrivalDate),
+        carrier: consignments.carrier,
+        status: consignments.status,
+        departureDate: new Date(consignments.departureDate),
+        expectedArrivalDate: new Date(consignments.expectedArrivalDate),
       };
     });
     try {
@@ -32,11 +31,18 @@ export class ConsignmentRepository {
       logger.info('Created new consignment');
       // query DB with said {shipmentId}
       const allShipments = await this.getAllConsignmentByID(shipmentId);
-      // return all records with {shipmentId}
+      const batchIds = consignments.batchId.map(batch => batch.toString());
 
-      //TODO: Call to blockchain
+      await new TeaSupplyChain().createConsignment(
+        shipmentId.toString(),
+        batchIds,
+        consignments.carrier,
+        consignments.departureDate.toISOString(),
+        consignments.expectedArrivalDate.toISOString(),
+        walletData.privateKey,
+      );
 
-      logger.info('Returning new consignment', allShipments);
+      logger.info(`Returning new consignment:  ${JSON.stringify(allShipments)}`);
       return allShipments;
     } catch (error) {
       logger.error(`ERROR - creating new consignment ${error}`);

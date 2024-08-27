@@ -4,10 +4,11 @@ import { DBException } from '@/exceptions/DBException';
 import { User } from '@/interfaces/users.interface';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
+import { getConnection } from 'typeorm';
 
 import { EntityRepository } from 'typeorm';
 
-import uniqid from 'uniqid';
+import { v4 as uuidv4 } from 'uuid';
 
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
@@ -17,24 +18,34 @@ export class TeaHarvestsRepository {
    * @returns updated row in db
    */
   async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any): Promise<TeaHarvests> {
-    const harvestId = uniqid();
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.startTransaction();
+
+    const harvestId = uuidv4();
+
     try {
-      const createHarvestData: TeaHarvestsEntity = await TeaHarvestsEntity.create({
+      const createHarvestData: TeaHarvestsEntity = await queryRunner.manager.save(TeaHarvestsEntity, {
         ...harvestInput,
         harvestId,
-      }).save();
-      
-      const result = await new TeaSupplyChain().recordHarvest(
-        harvestId.toString(),
+      });
+
+      await new TeaSupplyChain().recordHarvest(
+        harvestId,
         createHarvestData.createdAt.toISOString(),
         createHarvestData.quality,
         createHarvestData.quantity.toString(),
         createHarvestData.location,
         userWallet.privateKey,
       );
+
+      await queryRunner.commitTransaction();
       return createHarvestData;
     } catch (error) {
-      throw new DBException(500, error);
+      await queryRunner.rollbackTransaction();
+      console.error(`Error creating harvest: ${error.message}`, { harvestInput, harvestId });
+      throw new DBException(500, 'Failed to create harvest');
+    } finally {
+      await queryRunner.release();
     }
   }
 
