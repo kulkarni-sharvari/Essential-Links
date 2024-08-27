@@ -23,8 +23,8 @@ import { dbConnection } from '@database';
 import { AuthMiddleware, AuthCheckerMiddleware } from '@middlewares/auth.middleware';
 // custom error-handling middleware
 import { ErrorMiddleware } from '@middlewares/error.middleware';
-import { logger, responseLogger, errorLogger } from '@utils/logger';
 import { GetEvents } from './services/blockchain/getEvents';
+import { logger, errorLogger } from '@utils/logger';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -118,7 +118,7 @@ export class App {
         }
       },
       formatResponse: (response, request) => {
-        responseLogger(request);
+        // logger(request);
 
         return response;
       },

@@ -1,4 +1,4 @@
-import { ethers, Wallet } from 'ethers';
+import { ethers } from 'ethers';
 import uniqid from 'uniqid';
 import { logger } from "@/utils/logger";
 
