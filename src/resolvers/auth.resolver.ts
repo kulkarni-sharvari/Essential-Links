@@ -43,7 +43,7 @@ export class AuthResolver extends AuthRepository {
   })
   async login(@Arg('userData') userData: UserLoginDto): Promise<JWTUser> {
     const { findUser, tokenData } = await this.userLogIn(userData);
-    
+
     const jwtUser: JWTUser = {
       userId: findUser?.id,
       email: findUser?.email,

@@ -18,7 +18,7 @@ import { USER_ROLE } from '@/constants';
 @InputType()
 // the class will have fields that partially match the `User` type, though they are optional in the context of `Partial<User>`
 export class CreateUserDto implements Partial<User> {
-// Marks the `email` property as a GraphQL field, meaning it can be passed as an argument in GraphQL operations
+  // Marks the `email` property as a GraphQL field, meaning it can be passed as an argument in GraphQL operations
   @Field()
   //  Ensures that the `email` property is a valid email address
   @IsEmail()
@@ -41,22 +41,20 @@ export class CreateUserDto implements Partial<User> {
   @IsString()
   @IsNotEmpty()
   location: string;
-
 }
 
-@InputType()
-export class UpdateUserDto implements Partial<User> {
-  @Field()
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(9)
-  @MaxLength(32)
-  password: string;
-}
+// @InputType()
+// export class UpdateUserDto implements Partial<User> {
+//   @Field()
+//   @IsString()
+//   @IsNotEmpty()
+//   @MinLength(9)
+//   @MaxLength(32)
+//   password: string;
+// }
 
 @InputType()
 export class UserLoginDto implements Partial<User> {
-
   @Field()
   @IsEmail()
   email: string;

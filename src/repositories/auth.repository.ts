@@ -1,79 +1,99 @@
-/**
- * This code defines an authentication repository (`AuthRepository`) using TypeORM, which handles user sign-up, login, and logout functionalities in an application
- */
-
 import { hash, compare } from 'bcrypt';
-//  Imports the `sign` function from the `jsonwebtoken` library, used to create JSON Web Tokens (JWTs).
 import { sign } from 'jsonwebtoken';
-// used to create custom repositories
 import { EntityRepository } from 'typeorm';
 import { SECRET_KEY } from '@config';
-// a class  which validates and handle user data when creating a new user.
 import { CreateUserDto, UserLoginDto } from '@dtos/users.dto';
-// a class which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
-// a class which handles HTTP exceptions
+import { WalletEntity } from '@/entities/wallet.entity';
 import { HttpException } from '@exceptions/HttpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { JWTToken } from '@/typedefs/jwtuser.type';
-
 import { CreateWallet } from '@/services/createWallet';
-import { WalletEntity } from '@/entities/wallet.entity';
 import { CryptoUtil } from '@/utils/crypto';
-
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
-// Method to creates a JWT for a user
+import { logger } from '@/utils/logger'; // Assume logger utility is available
+import { getConnection } from 'typeorm';
+
+// Method to create a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id, role: user.role };
-
-  const expiresIn: number = 60 * 60;
+  const expiresIn: number = 60 * 60; // Token expiry time
 
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
 };
 
-// creates a cookie string for storing the JWT
+// Method to create a cookie string for storing the JWT
 const createCookie = (tokenData: TokenData): string => {
   return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
 };
 
 @EntityRepository(UserEntity)
 export class AuthRepository {
-  // Method to creates a JWT for a user
-
+  /**
+   * Generates a JWT token for a user.
+   * @param userData - User login details.
+   * @returns JWT token data.
+   */
   public async getJWTToken(userData: CreateUserDto): Promise<JWTToken> {
     const user: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!user) throw new HttpException(409, `This email ${userData.email} was not found`);
+
     const isPasswordMatching: boolean = await compare(userData.password, user.password);
     if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
 
     const tokenData = createToken(user);
     return tokenData;
   }
+
+  /**
+   * Handles user sign-up functionality.
+   * @param userData - User details for sign-up.
+   * @returns The created user data.
+   */
+
   public async userSignUp(userData: CreateUserDto): Promise<User> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.startTransaction();
+
     try {
-      
-      const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
-      
-      if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-      const walletObj = new CreateWallet().createUserWallet();
+      // Create user data
       const hashedPassword = await hash(userData.password, 10);
+      const walletObj = new CreateWallet().createUserWallet();
       const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
-      const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword, walletAddress: walletObj.address }).save();
-      await WalletEntity.create({ ...walletObj, privateKey: encryptedKey, userId: createUserData.id }).save();
-      //await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
-      //TODO: call to registerUser function of smart contract
-      //TODO: ROLES mapping to numbers
-      // console.log("User Data", userData);
+
+      const createUserData: User = await queryRunner.manager.save(UserEntity, {
+        ...userData,
+        password: hashedPassword,
+        walletAddress: walletObj.address,
+      });
+
+      // Create wallet data
+      await queryRunner.manager.save(WalletEntity, {
+        ...walletObj,
+        privateKey: encryptedKey,
+        userId: createUserData.id,
+      });
+
+      // Register the user on the blockchain
       const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      console.log("tx Receipt", res.events.UserRegistered);
+      console.log('tx Receipt', res);
+
+      await queryRunner.commitTransaction();
       return createUserData;
     } catch (error) {
-      
+      await queryRunner.rollbackTransaction();
+      throw new HttpException(500, `User registration failed: ${error.message}`);
+    } finally {
+      await queryRunner.release();
     }
-    
   }
 
+  /**
+   * Handles user login functionality.
+   * @param userData - User login details.
+   * @returns Object containing cookie, user data, and token data.
+   */
   public async userLogIn(userData: UserLoginDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
@@ -87,6 +107,11 @@ export class AuthRepository {
     return { cookie, findUser, tokenData };
   }
 
+  /**
+   * Handles user logout functionality.
+   * @param userId - The ID of the user logging out.
+   * @returns The user data.
+   */
   public async userLogOut(userId: number): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { id: userId } });
     if (!findUser) throw new HttpException(409, "User doesn't exist");
