@@ -95,7 +95,6 @@ export class TeaSupplyChain {
 
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordProcessing', payload, this.currentUserAddress);
       this.clearUserAccount();
-
       return res;
     } catch (error) {
       logger.error(`Error in recordProcessing: ${error.message}`);

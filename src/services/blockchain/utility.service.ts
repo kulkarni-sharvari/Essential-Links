@@ -28,7 +28,10 @@ export class Utility {
         gas: GAS_LIMIT,
       };
 
-      return await contractInstance.methods[method](...payload).send(txObject);
+      const res = await contractInstance.methods[method](...payload).send(txObject);
+
+      console.log('Contract Receipt:', res);
+      return res;
     } catch (error) {
       logger.error(
         `Error in invokeContractPostMethod for method: ${method} with payload: ${JSON.stringify(payload)} from sender: ${senderAddress} - ${
