@@ -29,7 +29,6 @@ export class Utility {
       };
 
       const res = await contractInstance.methods[method](...payload).send(txObject);
-
       console.log('Contract Receipt:', res);
       return res;
     } catch (error) {
