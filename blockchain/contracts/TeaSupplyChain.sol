@@ -201,13 +201,6 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata quantity,
     string calldata location
   ) external override /*onlyRole(ROLE.FARMER)*/ {
-    // require(bytes(harvestId).length > 0, 'Harvest ID is required');
-    // require(bytes(date).length > 0, 'Date is required');
-    // require(bytes(quality).length > 0, 'Quality is required');
-    // require(bytes(quantity).length > 0, 'Quantity is required');
-    // require(bytes(location).length > 0, 'Location is required');
-    require(harvestIdToHarvestDetails[harvestId].farmerId == address(0), 'Harvest ID already exists');
-
     _storeHarvest(harvestId, date, quality, quantity, location);
   }
 
@@ -259,8 +252,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @param status Processing status of the harvest.
    */
   function recordProcessing(string calldata harvestId, PROCESSING_STATUS status) external override /*onlyRole(ROLE.PROCESSING_PLANT) */ {
-    require(harvestIdToHarvestDetails[harvestId].farmerId != address(0), 'Harvest ID does not exist');
-
+    // require(harvestIdToHarvestDetails[harvestId].farmerId != address(0), 'Harvest ID does not exist');
     harvestIdToProcessingDetails[harvestId] = status;
     emit ProcessingDetailsUpdated(harvestId, status, block.timestamp);
   }
@@ -287,12 +279,6 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata quantity,
     string[] calldata packetIds
   ) external override /*onlyRole(ROLE.PROCESSING_PLANT)*/ {
-    // require(bytes(batchId).length > 0, 'Batch ID is required');
-    // require(bytes(harvestId).length > 0, 'Harvest ID is required');
-    // require(bytes(quantity).length > 0, 'Quantity is required');
-    // require(packetIds.length > 0, 'At least one packet ID is required');
-    // require(batchIdToBatchDetails[batchId].packetIds.length == 0, 'Batch ID already exists');
-
     BatchDetails memory newBatch = BatchDetails({batchId: batchId, harvestId: harvestId, packetQuantity: quantity, packetIds: packetIds});
 
     batchIdToBatchDetails[batchId] = newBatch;
@@ -316,11 +302,6 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata departureDate,
     string calldata eta
   ) external override /*onlyRole(ROLE.SHIPMENT)**/ {
-    // require(bytes(consignmentId).length > 0, 'Consignment ID is required');
-    // require(batchIds.length > 0, 'At least one batch ID is required');
-    // require(bytes(carrier).length > 0, 'Carrier is required');
-    // require(bytes(departureDate).length > 0, 'Departure date is required');
-    // require(bytes(eta).length > 0, 'ETA is required');
     // // require(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId.length == 0, 'Consignment ID already exists');
 
     Consignment memory newConsignment = Consignment({

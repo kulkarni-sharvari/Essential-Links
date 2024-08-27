@@ -27,9 +27,6 @@ export class Utility {
         from: senderAddress,
         gas: GAS_LIMIT,
       };
-      console.log(`Method: ${method}`);
-      console.log(`Payload: ${payload}`);
-      console.log(`Sender Address: ${senderAddress}`);
       return await contractInstance.methods[method](...payload).send(txObject);
     } catch (err) {
       throw err;
