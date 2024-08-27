@@ -1,11 +1,10 @@
 // This decorator ensures that a field is not empty.
 import { IsNotEmpty } from 'class-validator';
 // Imports various decorators and classes from `typeorm`
-import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 // Imports the `User` interface
 import { User } from '@interfaces/users.interface';
-import { TeaHarvestsEntity } from './harvests.entity';
 
 // `BaseEntity`: Provides base methods for interacting with the database (e.g., `save`, `remove`)
 

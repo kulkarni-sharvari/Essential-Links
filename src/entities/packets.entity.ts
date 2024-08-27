@@ -1,7 +1,6 @@
-import { IsNotEmpty } from "class-validator";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, ManyToOne, UpdateDateColumn } from "typeorm";
-import { Packets } from "@/interfaces/packets.interface";
-
+import { IsNotEmpty } from 'class-validator';
+import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { Packets } from '@/interfaces/packets.interface';
 
 @Entity()
 export class PacketsEntity extends BaseEntity implements Packets {
@@ -16,7 +15,7 @@ export class PacketsEntity extends BaseEntity implements Packets {
   @IsNotEmpty()
   weight: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   blockchainHash: string;
 
   @Column()
@@ -28,6 +27,4 @@ export class PacketsEntity extends BaseEntity implements Packets {
   // Automatically updates the column to the current date whenever the record is updated
   @UpdateDateColumn()
   updatedAt: Date;
-
-
 }

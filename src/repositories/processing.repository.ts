@@ -13,78 +13,80 @@ import uniqid from 'uniqid';
 @EntityRepository(ProcessingEntity)
 export class ProcessingRepository {
   /**
-   * creates a row in DB for processing
-   * @param processingInput takes processing input object to create record in db
-   * @returns updated row in db
+   * Creates a record in the database for processing.
+   * @param processingInput - The processing input data.
+   * @param userWallet - The wallet of the user making the request.
+   * @returns The created processing record.
    */
   public async processingCreate(processingInput: CreateProcessingDto, userWallet: any): Promise<Processing> {
     try {
+      // Interact with the blockchain to record the processing
       const res = await new TeaSupplyChain().recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
-      console.log('res', res);
+      logger.info('Processing recorded on blockchain:', res);
 
+      // Save the processing data in the database
       const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput }).save();
       return createProcessingData;
     } catch (error) {
-      throw new DBException(500, error);
+      logger.error('Error in processingCreate method:', error);
+      throw new DBException(500, error.message);
     }
   }
 
   /**
-   *
-   * @param user gets harvestId from req
-   * @returns all processing records for that harvest id
+   * Retrieves processing records by harvest ID.
+   * @param harvestId - The ID of the harvest.
+   * @returns A list of processing records for the given harvest ID.
    */
-  async getProcessingDetailsByHarvestId(harvestId: string): Promise<Processing[]> {
-    const processingDetails = await ProcessingEntity.find({ where: { harvestId: harvestId } });
-    return processingDetails;
+  public async getProcessingDetailsByHarvestId(harvestId: string): Promise<Processing[]> {
+    try {
+      const processingDetails = await ProcessingEntity.find({ where: { harvestId } });
+      return processingDetails;
+    } catch (error) {
+      logger.error(`Error retrieving processing details for harvestId: ${harvestId}`, error);
+      throw new DBException(500, error.message);
+    }
   }
 
   /**
-   *
-   * @param batchInput gets harvestId, numberofPackages, packageWeight
-   * @returns Batches created
+   * Creates a batch and associated packets in the database.
+   * @param batchInput - The input data for creating a batch.
+   * @param userWallet - The wallet of the user making the request.
+   * @returns The created batch information.
    */
-  async batchCreate(batchInput: CreateBatchDto, userWallet: any): Promise<Batches> {
+  public async batchCreate(batchInput: CreateBatchDto, userWallet: any): Promise<Batches> {
     batchInput['packetWeight'] = '50g';
 
-    //create a unique batchId
-    logger.info(`Creating batchId`);
+    logger.info('Creating batchId');
     const batchId = uniqid();
-    // based on the numberOfPackages create packageId
+
+    logger.info('Creating packets');
     const packages: Partial<Packets>[] = [];
-    logger.info(`Creating packets`);
     for (let i = 0; i < batchInput.noOfPackets; i++) {
       const packageId = uniqid();
-      const pack: Partial<Packets> = {
-        batchId,
-        packageId,
-        //TODO:
-        weight: batchInput.packetWeight,
-        // weight: '100gm',
-      };
-      packages.push(pack);
+      packages.push({ batchId, packageId, weight: batchInput.packetWeight });
     }
+
     try {
-      console.log(' Packages: ', packages);
-
-      // bulk insert into packages table
+      // Bulk insert into the packets table
       await PacketsEntity.createQueryBuilder().insert().into(PacketsEntity).values(packages).execute();
-      logger.info(`Created packets successfully`);
+      logger.info('Created packets successfully');
 
-      // update {numberofPackages} and {batchId} in harvest table
+      // Update the processing entity with batch details
       await ProcessingEntity.createQueryBuilder()
         .update(ProcessingEntity)
         .where({ harvestId: batchInput.harvestId })
         .set({ batchId, noOfPackets: batchInput.noOfPackets })
         .execute();
-      logger.info(`updated processing with batch details successfully`);
+      logger.info('Updated processing with batch details successfully');
 
       const batch: Batches = {
         batchId,
         packetWeight: batchInput.packetWeight,
-        packages: packages.map(({ packageId }): string => packageId as string),
+        packages: packages.map(({ packageId }) => packageId as string),
       };
 
+      // Interact with the blockchain to create the batch
       const result = await new TeaSupplyChain().createBatch(
         batchId,
         batchInput.harvestId,
@@ -92,10 +94,12 @@ export class ProcessingRepository {
         batch.packages,
         userWallet.privateKey,
       );
-      console.log('result ', result);
+      logger.info('Batch created on blockchain:', result);
+
       return batch;
     } catch (error) {
-      throw new DBException(500, error);
+      logger.error('Error in batchCreate method:', error);
+      throw new DBException(500, error.message);
     }
   }
 }
