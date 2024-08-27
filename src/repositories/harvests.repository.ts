@@ -23,10 +23,15 @@ export class TeaHarvestsRepository {
         ...harvestInput,
         harvestId,
       }).save();
-      const date = new Date(createHarvestData.createdAt).getTime();
-      const { quality, quantity, location } = createHarvestData;
-      const result = await new TeaSupplyChain().recordHarvest(harvestId, date.toString(), quality, quantity.toString(), location, userWallet.privateKey);
-      console.log(" Result", result);
+      
+      const result = await new TeaSupplyChain().recordHarvest(
+        harvestId.toString(),
+        createHarvestData.createdAt.toISOString(),
+        createHarvestData.quality,
+        createHarvestData.quantity.toString(),
+        createHarvestData.location,
+        userWallet.privateKey,
+      );
       return createHarvestData;
     } catch (error) {
       throw new DBException(500, error);

@@ -76,7 +76,6 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [harvestId, harvestDate, quality, quantity, location];
-
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordHarvest', payload, this.currentUserAddress);
       this.clearUserAccount();
 
