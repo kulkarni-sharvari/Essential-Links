@@ -23,7 +23,7 @@ export class ConsignmentEntity extends BaseEntity implements Consignment {
     @IsNotEmpty()
     status: string;
 
-    @Column()
+    @Column({ nullable: true })
     blockchainHash: string;
 
     @Column()

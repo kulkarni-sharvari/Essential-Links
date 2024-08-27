@@ -7,7 +7,7 @@ import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 
 import { EntityRepository } from 'typeorm';
 
-import { v4 as uuidv4 } from 'uuid';
+import uniqid from 'uniqid';
 
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
@@ -17,16 +17,21 @@ export class TeaHarvestsRepository {
    * @returns updated row in db
    */
   async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any): Promise<TeaHarvests> {
-    const harvestId = uuidv4();
+    const harvestId = uniqid();
     try {
       const createHarvestData: TeaHarvestsEntity = await TeaHarvestsEntity.create({
         ...harvestInput,
         harvestId,
       }).save();
-      const date = new Date(createHarvestData.createdAt).getTime();
-      const { quality, quantity, location } = createHarvestData;
-      const result = await new TeaSupplyChain().recordHarvest(harvestId, date.toString(), quality, quantity.toString(), location, userWallet.privateKey);
-      console.log(" Result", result);
+      
+      const result = await new TeaSupplyChain().recordHarvest(
+        harvestId.toString(),
+        createHarvestData.createdAt.toISOString(),
+        createHarvestData.quality,
+        createHarvestData.quantity.toString(),
+        createHarvestData.location,
+        userWallet.privateKey,
+      );
       return createHarvestData;
     } catch (error) {
       throw new DBException(500, error);
