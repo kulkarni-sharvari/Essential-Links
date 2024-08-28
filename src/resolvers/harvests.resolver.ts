@@ -1,6 +1,5 @@
 import { USER_ROLE } from '@/constants';
 import { TeaHarvestsDto, UpdateTeaHarvestsDto } from '@/dtos/teaHarvests.dto';
-import { TeaHarvestsEntity } from '@/entities/harvests.entity';
 import { User } from '@/interfaces/users.interface';
 import { TeaHarvestsRepository } from '@/repositories/harvests.repository';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
