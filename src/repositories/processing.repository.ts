@@ -10,6 +10,8 @@ import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
 
+const tsc = new TeaSupplyChain().getInstance();
+
 @EntityRepository(ProcessingEntity)
 export class ProcessingRepository {
   /**
@@ -21,7 +23,8 @@ export class ProcessingRepository {
   public async processingCreate(processingInput: CreateProcessingDto, userWallet: any): Promise<Processing> {
     try {
       // Interact with the blockchain to record the processing
-      const res = await new TeaSupplyChain().recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
+      // const res = await new TeaSupplyChain().recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
+      const res = await tsc.recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
       logger.info('Processing recorded on blockchain:', res);
 
       // Save the processing data in the database
@@ -88,7 +91,14 @@ export class ProcessingRepository {
       };
 
       // Interact with the blockchain to create the batch
-      const result = await new TeaSupplyChain().createBatch(
+      // const result = await new TeaSupplyChain().createBatch(
+      //   batchId,
+      //   batchInput.harvestId,
+      //   batchInput.noOfPackets.toString(),
+      //   batch.packages,
+      //   userWallet.privateKey,
+      // );
+      const result = await tsc.createBatch(
         batchId,
         batchInput.harvestId,
         batchInput.noOfPackets.toString(),

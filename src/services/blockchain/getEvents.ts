@@ -67,6 +67,7 @@ export class GetEvents {
 
         this.contractInstance.on(
             "UserRegistered", async( accountAddress, userId, role, eventPayload) => {
+                console.log("got event ")
                 role = USER_ROLES[role];
                 await new ProcessEvents().addBlockchainHashToTable({accountAddress, userId, role}, eventPayload, "UserRegistered")
             }
