@@ -28,17 +28,17 @@ export class GetEvents {
         )
 
         this.contractInstance.on(
-            "ConsignmentCreated", async( consignmentId, batchIds, carrier, departureDate, eta, timestamp, eventPayload) => {
+            "ConsignmentCreated", async( shipmentId, batchIds, carrier, departureDate, eta, timestamp, eventPayload) => {
                 timestamp = this.convertDate(timestamp);
-                await new ProcessEvents().addBlockchainHashToTable({consignmentId, batchIds, carrier, departureDate, eta, timestamp}, eventPayload, "ConsignmentCreated")
+                await new ProcessEvents().addBlockchainHashToTable({shipmentId, batchIds, carrier, departureDate, eta, timestamp}, eventPayload, "ConsignmentCreated")
             }
         )
 
         this.contractInstance.on(
-            "ConsignmentUpdated", async( consignmentId, temperature, humidity, status, timestamp, eventPayload) => {
+            "ConsignmentUpdated", async( shipmentId, temperature, humidity, status, timestamp, eventPayload) => {
                 timestamp = this.convertDate(timestamp);
                 status = STATUS_TRACKING[status]
-                await new ProcessEvents().addBlockchainHashToTable({consignmentId, temperature, humidity, status, timestamp}, eventPayload, "ConsignmentUpdated")
+                await new ProcessEvents().addBlockchainHashToTable({shipmentId, temperature, humidity, status, timestamp}, eventPayload, "ConsignmentUpdated")
             }
         )
 
@@ -66,10 +66,10 @@ export class GetEvents {
         )
 
         this.contractInstance.on(
-            "UserRegistered", async( accountAddress, userId, role, eventPayload) => {
-                console.log("got event ")
+            "UserRegistered", async( accountAddress, userId, role, timestamp, eventPayload) => {
+                timestamp = this.convertDate(timestamp);
                 role = USER_ROLES[role];
-                await new ProcessEvents().addBlockchainHashToTable({accountAddress, userId, role}, eventPayload, "UserRegistered")
+                await new ProcessEvents().addBlockchainHashToTable({accountAddress, userId, role, timestamp}, eventPayload, "UserRegistered")
             }
         )
     }

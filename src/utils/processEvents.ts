@@ -26,7 +26,12 @@ export class ProcessEvents {
                 break;
 
             case 'ConsignmentCreated': 
-                    await ConsignmentEntity.update(eventData.consignmentId, { blockchainHash: txnHash });
+                   // await ConsignmentEntity.update(eventData.shipmentId, { blockchainHash: txnHash });
+                   await ConsignmentEntity.createQueryBuilder()
+                   .update(ConsignmentEntity)
+                   .where({ shipmentId: eventData.shipmentId })
+                   .set({ blockchainHash: txnHash })
+                   .execute();
                     break;
             case 'LeavesHarvested': 
                     await TeaHarvestsEntity.update(eventData.harvestId, { blockchainHash: txnHash });
@@ -39,9 +44,6 @@ export class ProcessEvents {
                 break;
                 
         }   
-        console.log("txn hash ", txnHash);
-        console.log(eventData)
-        console.log(eventName)
 
         await EventEntity.create({
             eventDetails: eventData, 

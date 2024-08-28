@@ -87,5 +87,6 @@ export class UpdateConsignmentEnvDetailsDto implements Partial<Consignment> {
 
   @Field()
   @IsNotEmpty()
+  @IsEnum(STATUS_TRACK, { message: 'Track must be one of the following: TRANSIT, WAREHOUSE, RETAILER' })
   track: string;
 }
