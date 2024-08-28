@@ -16,11 +16,11 @@ export class EnvironmentEntity extends BaseEntity implements Environment {
 
   @Column()
   @IsNotEmpty()
-  temperature: number;
+  temperature: string;
 
   @Column()
   @IsNotEmpty()
-  humidity: number;
+  humidity: string;
 
   @Column()
   // Automatically updates the column to the current date whenever the record is updated
