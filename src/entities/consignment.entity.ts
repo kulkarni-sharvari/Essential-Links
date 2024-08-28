@@ -1,7 +1,8 @@
 import { Consignment } from "@/interfaces/consignment.interface";
 import { IsNotEmpty } from "class-validator";
-import { BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { ProcessingEntity } from "./processing.entity";
+import { UserEntity } from "./users.entity";
 
 @Entity()
 export class ConsignmentEntity extends BaseEntity implements Consignment {
@@ -48,4 +49,10 @@ export class ConsignmentEntity extends BaseEntity implements Consignment {
 
     @OneToMany(() => ProcessingEntity, (processing) => processing.batchId)
     processing: ProcessingEntity
+
+    // many consignments can be fulfilled by 1 user
+    @ManyToOne(() => UserEntity, (user) => user.consignment)
+    @JoinColumn({ name: 'storagePlantId', referencedColumnName: 'id' })
+    user: UserEntity;
+
 }

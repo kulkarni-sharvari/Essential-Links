@@ -1,13 +1,15 @@
 import { TeaHarvests } from '@/interfaces/harvests.interface';
 import { IsNotEmpty } from 'class-validator';
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { UserEntity } from './users.entity';
+import { ProcessingEntity } from './processing.entity';
 
 @Entity()
 export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
   @PrimaryColumn()
   harvestId: string;
 
-  @Column()
+  @Column({unique:true})
   @IsNotEmpty()
   userId: number;
 
@@ -34,4 +36,12 @@ export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
 
   @Column()
   location: string;
+
+  @ManyToOne(() => UserEntity, (user) => user.id)
+  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
+  user: UserEntity;
+
+  @OneToOne(() => ProcessingEntity, process => process.harvest)
+  // @JoinColumn({ name: 'harvestId', referencedColumnName: 'harvestId' })
+  process: ProcessingEntity;
 }
