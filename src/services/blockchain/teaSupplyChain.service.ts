@@ -5,7 +5,7 @@ import { BESU_URL, SUPPLYCHAIN_ADDRESS, ADMIN_PK } from '@config';
 import tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/SupplyChain.json';
 import { PROCESSING_STATUS, STATUS_TRACKING, USER_ROLES } from '@/constants/constants';
 
-export class TeaSupplyChain {
+class TeaSupplyChain {
   private web3: Web3;
   private contractInstance: any;
   private currentUserAddress: string | null = null;
@@ -172,4 +172,23 @@ export class TeaSupplyChain {
     }
   }
 }
+
+
+class Singleton {
+
+  private static instance: TeaSupplyChain;
+
+  constructor() {
+    if (!Singleton.instance) {
+      Singleton.instance = new TeaSupplyChain();
+    }
+  }
+
+  getInstance() {
+    return Singleton.instance;
+  }
+
+}
+
+export { Singleton as TeaSupplyChain };
 

@@ -14,6 +14,8 @@ import { CryptoUtil } from '@/utils/crypto';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
 
+const tsc = new TeaSupplyChain().getInstance();
+
 // Method to create a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id, role: user.role };
@@ -75,7 +77,8 @@ export class AuthRepository {
       });
 
       // Register the user on the blockchain
-      const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
+      //const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
+      const res = await tsc.registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
       console.log('tx Receipt', res);
 
       await queryRunner.commitTransaction();

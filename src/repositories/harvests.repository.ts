@@ -9,6 +9,8 @@ import { getConnection } from 'typeorm';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
 
+const tsc = new TeaSupplyChain().getInstance();
+
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
   /**
@@ -27,7 +29,16 @@ export class TeaHarvestsRepository {
         harvestId,
       });
 
-      await new TeaSupplyChain().recordHarvest(
+      // await new TeaSupplyChain().recordHarvest(
+      //   harvestId,
+      //   createHarvestData.createdAt.toISOString(),
+      //   createHarvestData.quality,
+      //   createHarvestData.quantity.toString(),
+      //   createHarvestData.location,
+      //   userWallet.privateKey,
+      // );
+
+            await tsc.recordHarvest(
         harvestId,
         createHarvestData.createdAt.toISOString(),
         createHarvestData.quality,

@@ -8,6 +8,8 @@ import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
 
+const tsc = new TeaSupplyChain().getInstance();
+
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
   //TODO:
@@ -34,7 +36,16 @@ export class ConsignmentRepository {
       const allShipments = await this.getAllConsignmentByID(shipmentId);
       const batchIds = consignments.batchId.map(batch => batch.toString());
 
-      await new TeaSupplyChain().createConsignment(
+      // await new TeaSupplyChain().createConsignment(
+      //   shipmentId.toString(),
+      //   batchIds,
+      //   consignments.carrier,
+      //   consignments.departureDate.toISOString(),
+      //   consignments.expectedArrivalDate.toISOString(),
+      //   walletData.privateKey,
+      // );
+
+            await tsc.createConsignment(
         shipmentId.toString(),
         batchIds,
         consignments.carrier,
@@ -134,8 +145,9 @@ export class ConsignmentRepository {
         await this.consignmentStatusUpdate(trackUpdateObj);
 
         // trigger blockchain for changes
-        await new TeaSupplyChain()
-          .updateConsignment(consignment.shipmentId, consignment.temperature, consignment.humidity, consignment.track, userWallet.privateKey)
+        // await new TeaSupplyChain()
+        //   .updateConsignment(consignment.shipmentId, consignment.temperature, consignment.humidity, consignment.track, userWallet.privateKey)
+         await tsc.updateConsignment(consignment.shipmentId, consignment.temperature, consignment.humidity, consignment.track, userWallet.privateKey)
 
         logger.info(`Updated environment details for ${consignment.shipmentId}`);
       }
