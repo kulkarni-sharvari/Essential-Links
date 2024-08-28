@@ -90,8 +90,7 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const status = PROCESSING_STATUS[processingStatus];
-      const payload = [harvestId, status];
-
+      const payload = [harvestId.toString(), status];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordProcessing', payload, this.currentUserAddress);
       this.clearUserAccount();
       return res;
@@ -127,11 +126,10 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [consignmentId, batchIds, carrier, departureDate, eta];
-
       const res = await Utility.invokeContractPostMethod(contractInstance, 'createConsignment', payload, this.currentUserAddress);
       this.clearUserAccount();
 
-      return res;
+      // return res;
     } catch (error) {
       logger.error(`Error in createConsignment: ${error.message}`);
       throw error;
@@ -159,4 +157,19 @@ export class TeaSupplyChain {
       throw error;
     }
   }
+
+  public async getPacketHistory(batchId: string): Promise<any> {
+    try {
+      const payload = [batchId];
+      const contractInstance = this.getContractInstance(ADMIN_PK);
+      const res = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistoryByBatchId', payload);
+      this.clearUserAccount();
+
+      return res;
+    } catch (error) {
+      logger.error(`Error in updateConsignment: ${error.message}`);
+      throw error;
+    }
+  }
 }
+

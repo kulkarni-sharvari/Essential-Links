@@ -29,7 +29,8 @@ export class ProcessingRepository {
       return createProcessingData;
     } catch (error) {
       logger.error('Error in processingCreate method:', error);
-      throw new DBException(500, error.message);
+      // throw new DBException(500, error.message);
+      throw new Error(error.message);
     }
   }
 

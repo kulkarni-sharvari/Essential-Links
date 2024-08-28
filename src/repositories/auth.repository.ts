@@ -12,7 +12,6 @@ import { JWTToken } from '@/typedefs/jwtuser.type';
 import { CreateWallet } from '@/services/createWallet';
 import { CryptoUtil } from '@/utils/crypto';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
-import { logger } from '@/utils/logger'; // Assume logger utility is available
 import { getConnection } from 'typeorm';
 
 // Method to create a JWT for a user
