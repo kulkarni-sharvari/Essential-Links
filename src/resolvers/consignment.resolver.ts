@@ -1,7 +1,9 @@
 import { USER_ROLE } from '@/constants';
 import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDetailsDto, UpdateConsignmentStatusDto } from '@/dtos/consignment.dto';
+import { EnvironmentEntity } from '@/entities/environment.entity';
 import { ConsignmentRepository } from '@/repositories/consignment.repository';
 import { Consignment, ConsignmentOutput } from '@/typedefs/consignment.type';
+import { Environment } from '@/typedefs/environment.type';
 import { GetWalletInfo } from '@/utils/getWalletInfo';
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 
@@ -9,7 +11,6 @@ import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
 export class ConsignmentResolver extends ConsignmentRepository {
   @Authorized([USER_ROLE.SHIPMENT_COMPANY])
   @Mutation(() => [ConsignmentOutput], { description: 'Create a consignment of multiple batches' })
-  //async createConsignment(@Arg('consignment') consignmentsInput: CreateConsignmentDto, @Ctx('user') userData) {
   async createConsignment(@Ctx('user') userData: any, @Arg('consignments', type => ConsignmentDto) consignments: ConsignmentDto) {
     const userWallet = await new GetWalletInfo().createWalletFromId(userData.id);
     const consignment = await this.consignmentCreate(consignments, userData, userWallet);
@@ -31,9 +32,10 @@ export class ConsignmentResolver extends ConsignmentRepository {
   }
 
   @Authorized([USER_ROLE.SHIPMENT_COMPANY])
-  @Mutation(() => Consignment, { description: 'Update environment details' })
-  async updateConsignmentEnvDetails(consignment: UpdateConsignmentEnvDetailsDto) {
-    const updatedConsignment = await this.consignmentEnvironmentUpdate(consignment);
+  @Mutation(() => [Environment], { description: 'Update environment details' })
+  async updateConsignmentEnvDetails(@Arg('consignment') consignment: UpdateConsignmentEnvDetailsDto, @Ctx('user') userData: any): Promise<EnvironmentEntity[]> {
+    const userWallet = await new GetWalletInfo().createWalletFromId(userData.id);
+    const updatedConsignment = await this.consignmentEnvironmentUpdate(consignment, userWallet);
     return updatedConsignment;
   }
 }

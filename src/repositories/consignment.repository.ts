@@ -2,6 +2,7 @@ import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDet
 import { ConsignmentEntity } from '@/entities/consignment.entity';
 import { EnvironmentEntity } from '@/entities/environment.entity';
 import { DBException } from '@/exceptions/DBException';
+import { HttpException } from '@/exceptions/HttpException';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
@@ -70,16 +71,20 @@ export class ConsignmentRepository {
     try {
       // find if record with {shipmentId}
       const allShipments = await this.getAllConsignmentByID(consignment.shipmentId);
-      if (allShipments) {
-        // update the blockchainHash
+      if (!allShipments) throw new HttpException(404, "No Records found")
+      else {
+
+        // update the blockchainHash in DB
         logger.info(`Updating blockchainHash for ${consignment.shipmentId}`);
+
         await ConsignmentEntity.createQueryBuilder()
           .update(ConsignmentEntity)
           .where({ shipmentId: consignment.shipmentId })
           .set({ blockchainHash: consignment.blockchainHash })
           .execute();
+
+        logger.info(`Updated blockchainHash for ${consignment.shipmentId}`);
       }
-      logger.info(`Updated blockchainHash for ${consignment.shipmentId}`);
       //return all the records that are updated
       const allUpdatedShipments = await this.getAllConsignmentByID(consignment.shipmentId);
       return allUpdatedShipments;
@@ -112,16 +117,25 @@ export class ConsignmentRepository {
     }
   }
 
-  async consignmentEnvironmentUpdate(consignment: UpdateConsignmentEnvDetailsDto) {
+  async consignmentEnvironmentUpdate(consignment: UpdateConsignmentEnvDetailsDto, userWallet: any) {
     try {
       // find if record with {shipmentId}
       const allShipments = await this.getAllConsignmentByID(consignment.shipmentId);
       if (allShipments) {
         // update the blockchainHash
         logger.info(`Updating environment details for ${consignment.shipmentId}`);
-
-        await EnvironmentEntity.createQueryBuilder().insert().values(consignment).orUpdate(['humidity', 'track', 'temperature']).execute();
-
+        const updateConsignments = consignment.batchId.map(c => {
+          return {
+            batchId: c,
+            shipmentId: consignment.shipmentId,
+            track: consignment.track,
+            temperature: consignment.temperature,
+            humidity: consignment.humidity
+          };
+        });
+        const updatedEnv = await EnvironmentEntity
+          .upsert(updateConsignments, ['shipmentId', 'batchId'])
+        console.log(updatedEnv)
         // if track is changed then record the same in shipment table
         const trackUpdateObj: UpdateConsignmentStatusDto = {
           shipmentId: consignment.shipmentId,
@@ -129,6 +143,11 @@ export class ConsignmentRepository {
           status: consignment.track,
         };
         await this.consignmentStatusUpdate(trackUpdateObj);
+
+        // trigger blockchain for changes
+        await new TeaSupplyChain()
+          .updateConsignment(consignment.shipmentId, consignment.temperature, consignment.humidity, consignment.track, userWallet.privateKey)
+
         logger.info(`Updated environment details for ${consignment.shipmentId}`);
       }
       //return all the records that are updated

@@ -40,9 +40,9 @@ export class UpdateConsignmentStatusDto implements Partial<Consignment> {
   @IsNotEmpty()
   shipmentId: string;
 
-  @Field()
+  @Field(() => [String])
   @IsNotEmpty()
-  batchId: string;
+  batchId: string[];
 
   @Field()
   @IsNotEmpty()
@@ -57,9 +57,9 @@ export class UpdateConsignmentBlockchainDto implements Partial<Consignment> {
   @IsNotEmpty()
   shipmentId: string;
 
-  @Field()
+  @Field(() => [String])
   @IsNotEmpty()
-  batchId: string;
+  batchId: string[];
 
   @Field()
   @IsNotEmpty()
@@ -73,17 +73,17 @@ export class UpdateConsignmentEnvDetailsDto implements Partial<Consignment> {
   @IsNotEmpty()
   shipmentId: string;
 
-  @Field()
+  @Field(() => [String])
   @IsNotEmpty()
-  batchId: string;
+  batchId: string[];
 
   @Field()
   @IsNotEmpty()
-  humidity: number;
+  humidity: string;
 
   @Field()
   @IsNotEmpty()
-  temperature: number;
+  temperature: string;
 
   @Field()
   @IsNotEmpty()
