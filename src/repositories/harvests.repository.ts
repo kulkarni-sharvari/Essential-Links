@@ -7,8 +7,7 @@ import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
 
 import { EntityRepository } from 'typeorm';
-
-import { v4 as uuidv4 } from 'uuid';
+import uniqid from 'uniqid';
 
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
@@ -21,8 +20,7 @@ export class TeaHarvestsRepository {
     const queryRunner = getConnection().createQueryRunner();
     await queryRunner.startTransaction();
 
-    const harvestId = uuidv4();
-
+    const harvestId = uniqid();
     try {
       const createHarvestData: TeaHarvestsEntity = await queryRunner.manager.save(TeaHarvestsEntity, {
         ...harvestInput,
