@@ -124,17 +124,17 @@ export class ConsignmentRepository {
       if (allShipments) {
         // update the blockchainHash
         logger.info(`Updating environment details for ${consignment.shipmentId}`);
-        const updateConsignments = consignment.batchId.map(c => {
-          return {
-            batchId: c,
-            shipmentId: consignment.shipmentId,
-            track: consignment.track,
-            temperature: consignment.temperature,
-            humidity: consignment.humidity
-          };
-        });
+        // const updateConsignments = consignment.batchId.map(c => {
+        //   return {
+        //     batchId: c,
+        //     shipmentId: consignment.shipmentId,
+        //     track: consignment.track,
+        //     temperature: consignment.temperature,
+        //     humidity: consignment.humidity
+        //   };
+        // });
         const updatedEnv = await EnvironmentEntity
-          .upsert(updateConsignments, ['shipmentId', 'batchId'])
+          .upsert(consignment, ['shipmentId'])
         console.log(updatedEnv)
         // if track is changed then record the same in shipment table
         const trackUpdateObj: UpdateConsignmentStatusDto = {
