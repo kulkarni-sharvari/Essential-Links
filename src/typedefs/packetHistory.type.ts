@@ -1,7 +1,7 @@
 import { Field, ObjectType } from 'type-graphql';
 
 @ObjectType()
-class HarvestDetails {  // Export the class
+class HarvestDetails {
   @Field()
   harvestId: string;
 
@@ -25,7 +25,7 @@ class HarvestDetails {  // Export the class
 }
 
 @ObjectType()
-class BatchDetails {  // Export the class
+class BatchDetails {
   @Field()
   batchId: string;
 
@@ -40,7 +40,22 @@ class BatchDetails {  // Export the class
 }
 
 @ObjectType()
-class ConsignmentDetails {  // Export the class
+class OtherDetails {
+  @Field()
+  temperature: string;
+
+  @Field()
+  humidity: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  timestamp: string;
+}
+
+@ObjectType()
+class ConsignmentDetails {
   @Field()
   consignmentId: string;
 
@@ -59,33 +74,18 @@ class ConsignmentDetails {  // Export the class
   @Field()
   timestamp: string;
 
-  @Field()
+  @Field(() => OtherDetails)
   otherDetails: OtherDetails;
 }
 
 @ObjectType()
-class OtherDetails {  // Export the class
-  @Field()
-  temperature: string;
-
-  @Field()
-  humidity: string;
-
-  @Field()
-  status: string;  // Fixed typo from 'satus' to 'status'
-
-  @Field()
-  timestamp: string;
-}
-
-@ObjectType()
-export class PacketHistory {  // Export the class
-  @Field()
+export class PacketHistory {
+  @Field(() => HarvestDetails)
   harvestDetails: HarvestDetails;
 
-  @Field()
+  @Field(() => BatchDetails)
   batchDetails: BatchDetails;
 
-  @Field()
+  @Field(() => ConsignmentDetails)
   consignmentDetails: ConsignmentDetails;
 }

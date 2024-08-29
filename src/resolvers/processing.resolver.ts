@@ -16,8 +16,8 @@ export class ProcessingResolver extends ProcessingRepository {
    * @param batchId
    * @returns all processing details for that harvestId
    */
-  @Query(() => GraphQLJSONObject, { description: 'Get processing details for batchId' })
-  async getPacketHistory(@Arg('batchId') batchId: string): Promise<any> {
+  @Query(() => PacketHistory, { description: 'Get processing details for batchId' })
+  async getPacketHistory(@Arg('batchId') batchId: string): Promise<PacketHistory> {
     const packetHistory = await tsc.getPacketHistory(batchId);
     // console.log("Packet Historu", packetHistory);
     // return "";

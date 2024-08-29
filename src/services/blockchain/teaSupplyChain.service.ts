@@ -159,7 +159,7 @@ class TeaSupplyChain {
     }
   }
 
-  public async getPacketHistory(batchId: string): Promise<any> {
+  public async getPacketHistory(batchId: string): Promise<PacketHistory> {
     try {
       const payload = [batchId];
       const contractInstance = this.getContractInstance(ADMIN_PK);
