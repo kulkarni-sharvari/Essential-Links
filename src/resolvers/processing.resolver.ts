@@ -6,6 +6,7 @@ import { USER_ROLE } from '@/constants';
 import { Batches } from '@/typedefs/batches.type';
 import { GetWalletInfo } from '@/utils/getWalletInfo';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
+const tsc = new TeaSupplyChain().getInstance();
 
 @Resolver()
 export class ProcessingResolver extends ProcessingRepository {
@@ -15,7 +16,7 @@ export class ProcessingResolver extends ProcessingRepository {
    */
   @Query(() => String, { description: 'Get processing details for batchId' })
   async getPacketHistory(@Arg('batchId') batchId: string): Promise<any> {
-    const packetHistory = await new TeaSupplyChain().getPacketHistory(batchId);
+    const packetHistory = await tsc.getPacketHistory(batchId);
     return JSON.stringify(packetHistory);
   }
 
