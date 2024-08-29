@@ -1,11 +1,12 @@
 // Imports various decorators and classes from `typeorm`
-import { BaseEntity, Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import { BaseEntity, Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 // This decorator ensures that a field is not empty.
 import { IsNotEmpty } from 'class-validator';
 
 import { Processing } from '@/interfaces/processing.interface';
 import { TeaHarvestsEntity } from './harvests.entity';
 import { PacketsEntity } from './packets.entity';
+import { UserEntity } from './users.entity';
 @Entity()
 export class ProcessingEntity extends BaseEntity implements Processing {
   @PrimaryGeneratedColumn()
@@ -43,8 +44,7 @@ export class ProcessingEntity extends BaseEntity implements Processing {
   @JoinColumn({ name: 'harvestId', referencedColumnName: 'harvestId' })
   harvest: TeaHarvestsEntity;
 
-  // 1 batch can have many packets
-  // @OneToMany(() => PacketsEntity, packet => packet.process)
-  // @JoinColumn({ name: 'batchId', referencedColumnName: 'batchId' })
-  // packet: PacketsEntity;
+  @ManyToOne(() => UserEntity, (user) => user.id)
+  @JoinColumn({ name: 'packagingPlantId', referencedColumnName: 'id' })
+  user: UserEntity;
 }

@@ -32,7 +32,7 @@ export class ProcessingResolver extends ProcessingRepository {
   @Mutation(() => Processing, { description: 'Creates Processing Details' })
   async createProcessing(@Ctx('user') userData: any, @Arg('processing') processingInput: CreateProcessingDto): Promise<Processing> {
     const userWallet = await new GetWalletInfo().createWalletFromId(userData.id);
-    const processing = await this.processingCreate(processingInput, userWallet);
+    const processing = await this.processingCreate(processingInput, userWallet, userData.id);
     return processing;
   }
 

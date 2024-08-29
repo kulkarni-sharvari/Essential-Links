@@ -6,9 +6,6 @@ export class Environment {
     shipmentId: string;
 
     @Field()
-    batchId?: string;
-
-    @Field()
     track: string;
 
     @Field()

@@ -20,7 +20,7 @@ export class ProcessingRepository {
    * @param userWallet - The wallet of the user making the request.
    * @returns The created processing record.
    */
-  public async processingCreate(processingInput: CreateProcessingDto, userWallet: any): Promise<Processing> {
+  public async processingCreate(processingInput: CreateProcessingDto, userWallet: any, userId: number): Promise<Processing> {
     try {
       // Interact with the blockchain to record the processing
       // const res = await new TeaSupplyChain().recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
@@ -28,7 +28,9 @@ export class ProcessingRepository {
       logger.info('Processing recorded on blockchain:', res);
 
       // Save the processing data in the database
-      const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput }).save();
+      console.log(processingInput);
+      
+      const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput, packagingPlantId:userId }).save();
       return createProcessingData;
     } catch (error) {
       logger.error('Error in processingCreate method:', error);
