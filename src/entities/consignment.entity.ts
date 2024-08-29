@@ -1,8 +1,9 @@
 import { Consignment } from "@/interfaces/consignment.interface";
 import { IsNotEmpty } from "class-validator";
-import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { ProcessingEntity } from "./processing.entity";
 import { UserEntity } from "./users.entity";
+import { EnvironmentEntity } from "./environment.entity";
 
 @Entity()
 export class ConsignmentEntity extends BaseEntity implements Consignment {
@@ -54,5 +55,8 @@ export class ConsignmentEntity extends BaseEntity implements Consignment {
     @ManyToOne(() => UserEntity, (user) => user.consignment)
     @JoinColumn({ name: 'storagePlantId', referencedColumnName: 'id' })
     user: UserEntity;
+
+    @OneToOne(() => EnvironmentEntity, (environment) => environment.consignment)
+    environment: EnvironmentEntity;
 
 }

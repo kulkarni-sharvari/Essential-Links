@@ -42,6 +42,5 @@ export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
   user: UserEntity;
 
   @OneToOne(() => ProcessingEntity, process => process.harvest)
-  // @JoinColumn({ name: 'harvestId', referencedColumnName: 'harvestId' })
   process: ProcessingEntity;
 }

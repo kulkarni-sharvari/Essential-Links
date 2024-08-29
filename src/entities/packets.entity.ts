@@ -8,7 +8,7 @@ export class PacketsEntity extends BaseEntity implements Packets {
   @PrimaryColumn()
   packageId: string;
 
-  @Column({unique:true})
+  @Column()
   @IsNotEmpty()
   batchId: string;
 

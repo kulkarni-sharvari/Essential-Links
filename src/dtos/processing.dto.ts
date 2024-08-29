@@ -19,9 +19,6 @@ export class CreateProcessingDto implements Partial<Processing> {
   @IsEnum(PROCESSING_TYPES, { message: 'Process Type must be one of WITHERING, ROLLING, FERMENTING, DRYING, SORTING, PACKED' })
   processType: string;
 
-  @Field()
-  @IsNotEmpty()
-  packagingPlantId: number;
 }
 
 @InputType()

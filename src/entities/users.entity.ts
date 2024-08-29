@@ -8,6 +8,7 @@ import { User } from '@interfaces/users.interface';
 import { WalletEntity } from './wallet.entity';
 import { TeaHarvestsEntity } from './harvests.entity';
 import { ConsignmentEntity } from './consignment.entity';
+import { ProcessingEntity } from './processing.entity';
 
 // `BaseEntity`: Provides base methods for interacting with the database (e.g., `save`, `remove`)
 
@@ -54,6 +55,10 @@ export class UserEntity extends BaseEntity implements User {
   @OneToMany(() => TeaHarvestsEntity, harvest => harvest.user)
   @JoinColumn({ name: 'id', referencedColumnName: 'userId' })
   harvest: TeaHarvestsEntity;
+
+  @OneToMany(() => ProcessingEntity, process => process.user)
+  @JoinColumn({ name: 'id', referencedColumnName: 'packagingPlantId' })
+  process: ProcessingEntity;
 
   // 1 user can have many consignments
   @OneToMany(() => ConsignmentEntity, harvest => harvest.user)
