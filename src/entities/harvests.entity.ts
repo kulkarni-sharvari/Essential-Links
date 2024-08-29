@@ -9,7 +9,7 @@ export class TeaHarvestsEntity extends BaseEntity implements TeaHarvests {
   @PrimaryColumn()
   harvestId: string;
 
-  @Column({unique:true})
+  @Column()
   @IsNotEmpty()
   userId: number;
 

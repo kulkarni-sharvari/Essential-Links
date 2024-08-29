@@ -1,11 +1,13 @@
 import { CreateBatchDto, CreateProcessingDto } from '@/dtos/processing.dto';
 import { Processing } from '@/typedefs/processing.type';
+import { PacketHistory} from '@/typedefs/packetHistory.type';
 import { ProcessingRepository } from '@/repositories/processing.repository';
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { USER_ROLE } from '@/constants';
 import { Batches } from '@/typedefs/batches.type';
 import { GetWalletInfo } from '@/utils/getWalletInfo';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
+import { GraphQLJSONObject } from 'graphql-type-json';
 const tsc = new TeaSupplyChain().getInstance();
 
 @Resolver()
@@ -14,10 +16,12 @@ export class ProcessingResolver extends ProcessingRepository {
    * @param batchId
    * @returns all processing details for that harvestId
    */
-  @Query(() => String, { description: 'Get processing details for batchId' })
-  async getPacketHistory(@Arg('batchId') batchId: string): Promise<any> {
+  @Query(() => PacketHistory, { description: 'Get processing details for batchId' })
+  async getPacketHistory(@Arg('batchId') batchId: string): Promise<PacketHistory> {
     const packetHistory = await tsc.getPacketHistory(batchId);
-    return JSON.stringify(packetHistory);
+    // console.log("Packet Historu", packetHistory);
+    // return "";
+    return packetHistory;
   }
 
   /**
