@@ -12,8 +12,7 @@ export class Utility {
       } else {
         contractResponse = await contractInstance.methods[method](...payload).call();
       }
-
-      return contractResponse.toString();
+      return contractResponse;
     } catch (error) {
       logger.error(`Error in invokeContractGetMethod for method: ${method} with payload: ${JSON.stringify(payload)} - ${error.message}`);
       throw error; // Re-throw the error to be handled by the caller

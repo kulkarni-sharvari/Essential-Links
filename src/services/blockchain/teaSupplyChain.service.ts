@@ -4,6 +4,7 @@ import Web3 from 'web3';
 import { BESU_URL, SUPPLYCHAIN_ADDRESS, ADMIN_PK } from '@config';
 import tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/SupplyChain.json';
 import { PROCESSING_STATUS, STATUS_TRACKING, USER_ROLES } from '@/constants/constants';
+import { PacketHistory } from '@/typedefs/packetHistory.type';
 
 class TeaSupplyChain {
   private web3: Web3;
@@ -162,10 +163,43 @@ class TeaSupplyChain {
     try {
       const payload = [batchId];
       const contractInstance = this.getContractInstance(ADMIN_PK);
-      const res = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistoryByBatchId', payload);
+      const res:any = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistory', payload);
       this.clearUserAccount();
+      const packetHistory = {
+        harvestDetails: {
+          harvestId: res?.harvestDetails?.harvestId,
+          date: res?.harvestDetails?.date,
+          quality: res?.harvestDetails?.quality,
+          quantity: res?.harvestDetails?.quantity,
+          location: res?.harvestDetails?.location,
+          farmerId: res?.harvestDetails?.farmerId,
+          timestamp: res?.harvestDetails?.timestamp.toString(),
+        },
+        batchDetails: {
+          batchId: res?.batchDetails?.batchId,
+          harvestId: res?.batchDetails?.harvestId,
+          packetQuantity: res?.batchDetails?.packetQuantity,
+          packetIds: res?.batchDetails?.packetIds,
+        },
+        consignmentDetails: {
+          consignmentId: res?.consignmentDeails?.consignment.consignmentId,
+          batchIds: res?.consignmentDeails?.consignment.batchIds,
+          carrier: res?.consignmentDeails?.consignment.carrier,
+          departureDate: res?.consignmentDeails?.consignment.departureDate,
+          eta: res?.consignmentDeails?.consignment?.eta,
+          timestamp: res?.consignmentDeails?.consignment?.timestamp.toString(),
+          otherDetails: {
+            temperature: res?.consignmentDeails?.otherDetails.temperature,
+            humidity: res?.consignmentDeails?.otherDetails.humidity,
+            status: res?.consignmentDeails?.otherDetails.status.toString(),
+            timestamp: res?.consignmentDeails?.otherDetails.timestamp.toString(),
+          },
+        },
+      };
 
-      return res;
+      console.log('Packet Hisotry', packetHistory);
+
+      return packetHistory;
     } catch (error) {
       logger.error(`Error in updateConsignment: ${error.message}`);
       throw error;
@@ -173,9 +207,7 @@ class TeaSupplyChain {
   }
 }
 
-
 class Singleton {
-
   private static instance: TeaSupplyChain;
 
   constructor() {
@@ -187,8 +219,6 @@ class Singleton {
   getInstance() {
     return Singleton.instance;
   }
-
 }
 
 export { Singleton as TeaSupplyChain };
-
