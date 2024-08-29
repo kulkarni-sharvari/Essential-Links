@@ -18,7 +18,7 @@ export class TeaHarvestsRepository {
    * @param harvestInput takes harvest input object to create record in db
    * @returns updated row in db
    */
-  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any): Promise<TeaHarvests> {
+  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId:number): Promise<TeaHarvests> {
     const queryRunner = getConnection().createQueryRunner();
     await queryRunner.startTransaction();
 
@@ -27,6 +27,7 @@ export class TeaHarvestsRepository {
       const createHarvestData: TeaHarvestsEntity = await queryRunner.manager.save(TeaHarvestsEntity, {
         ...harvestInput,
         harvestId,
+        userId
       });
 
       // await new TeaSupplyChain().recordHarvest(
