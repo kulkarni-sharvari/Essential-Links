@@ -17,7 +17,7 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
   @Mutation(() => TeaHarvests, { description: 'Creates Harvests' })
   async createHarvest(@Ctx('user') userData: any, @Arg('harvest') harvestInput: TeaHarvestsDto): Promise<TeaHarvests> {
     const userWallet = await new GetWalletInfo().createWalletFromId(userData.id);
-    const harvest = await this.harvestCreate(harvestInput, userWallet);
+    const harvest = await this.harvestCreate(harvestInput, userWallet, userData.id);
     return harvest;
   }
 
