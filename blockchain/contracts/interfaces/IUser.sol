@@ -15,6 +15,7 @@ interface IUser {
    * - RETAILER: User responsible for selling the final product to consumers.
    */
   enum ROLE {
+    ADMIN,
     FARMER,
     PROCESSING_PLANT,
     SHIPMENT,
