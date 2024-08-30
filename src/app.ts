@@ -82,7 +82,8 @@ export class App {
       this.app.use(helmet({
         contentSecurityPolicy:{
           directives:CSP_RULES
-        }
+        },
+        referrerPolicy:{policy:"no-referrer"}
       }));
     }
 
