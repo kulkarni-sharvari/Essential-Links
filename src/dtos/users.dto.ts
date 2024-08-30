@@ -34,7 +34,7 @@ export class CreateUserDto implements Partial<User> {
   @Field()
   @IsString()
   @IsNotEmpty()
-  @IsEnum(USER_ROLE, { message: 'User role must be one of FARMER, PROCESSING_PLANT, SHIPMENT_COMPANY, RETAILER, CONSUMER' })
+  @IsEnum(USER_ROLE, { message: 'User role must be one of FARMER, PROCESSING_PLANT, SHIPMENT_COMPANY' })
   role: string;
 
   @Field()
