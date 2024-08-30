@@ -25,6 +25,7 @@ import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';
 import { CSP_RULES } from './constants';
 import rateLimit from 'express-rate-limit';
+import { sanitizeInput } from './middlewares/sanitizeInput.middleware';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -123,6 +124,7 @@ export class App {
     const schema = await buildSchema({
       resolvers: resolvers,
       authChecker: AuthCheckerMiddleware,
+      globalMiddlewares:[sanitizeInput]
     });
 
     // Creates a new instance of Apollo Server with the built schema

@@ -35,6 +35,7 @@
     "jsonwebtoken": "^8.5.1",
     "pg": "^8.7.3",
     "reflect-metadata": "^0.1.13",
+    "sanitize-html": "^2.13.0",
     "type-graphql": "^1.1.1",
     "typedi": "^0.10.0",
     "typeorm": "^0.2.45",
