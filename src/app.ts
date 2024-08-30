@@ -24,6 +24,7 @@ import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';
 import { CSP_RULES } from './constants';
+import rateLimit from 'express-rate-limit';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -79,13 +80,13 @@ export class App {
       this.app.use(hpp());
 
       this.app.use(helmet({
-        contentSecurityPolicy:{
-          directives:CSP_RULES
+        contentSecurityPolicy: {
+          directives: CSP_RULES
         },
-        referrerPolicy:{policy:"no-referrer"},
+        referrerPolicy: { policy: "no-referrer" },
         xContentTypeOptions: false,
-        xDownloadOptions:false,
-        xFrameOptions:{action:"deny"},
+        xDownloadOptions: false,
+        xFrameOptions: { action: "deny" },
         xPoweredBy: false,
 
       }));
@@ -98,6 +99,13 @@ export class App {
     this.app.use(express.json());
     // Adds middleware to parse URL-encoded data
     this.app.use(express.urlencoded({ extended: true }));
+    // Rate limiter
+    this.app.use(rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+      standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+      legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    }))
   }
 
   // set up the Apollo Server with the provided resolvers

@@ -6,9 +6,8 @@ const CSP_RULES = {
     objectSrc: ["'none'"],
     defaultSrc: ["'self'"],
     baseUri: ["'self'"],
-  }
+}
 
-  export {
+export {
     CSP_RULES
-  };
-  
+};
