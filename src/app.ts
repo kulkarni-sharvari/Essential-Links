@@ -25,6 +25,7 @@ import { AuthMiddleware, AuthCheckerMiddleware } from '@middlewares/auth.middlew
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';
+import { CSP_RULES } from './constants';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -75,9 +76,14 @@ export class App {
 
 
   private initializeMiddlewares() {
+
     if (this.env === 'production') {
       this.app.use(hpp());
-      this.app.use(helmet());
+      this.app.use(helmet({
+        contentSecurityPolicy:{
+          directives:CSP_RULES
+        }
+      }));
     }
 
     this.app.use(cors({ origin: ORIGIN, credentials: CREDENTIALS }));
