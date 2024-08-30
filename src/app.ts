@@ -79,11 +79,15 @@ export class App {
 
     if (this.env === 'production') {
       this.app.use(hpp());
+
       this.app.use(helmet({
         contentSecurityPolicy:{
           directives:CSP_RULES
         },
-        referrerPolicy:{policy:"no-referrer"}
+        referrerPolicy:{policy:"no-referrer"},
+        xContentTypeOptions: false,
+        xDownloadOptions:false,
+        xFrameOptions:{action:"deny"}
       }));
     }
 
