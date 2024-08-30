@@ -54,8 +54,7 @@ class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(ADMIN_PK);
       const userRole = USER_ROLES[role];
-      const payload = [accountAddress, userId, userRole];
-
+      const payload = [accountAddress, userId.toString(), userRole];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'registerUser', payload, this.currentUserAddress);
       this.clearUserAccount();
 
@@ -163,7 +162,7 @@ class TeaSupplyChain {
     try {
       const payload = [batchId];
       const contractInstance = this.getContractInstance(ADMIN_PK);
-      const res:any = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistory', payload);
+      const res: any = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistory', payload);
       this.clearUserAccount();
       const packetHistory = {
         harvestDetails: {

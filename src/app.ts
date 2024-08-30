@@ -25,6 +25,7 @@ import { AuthMiddleware, AuthCheckerMiddleware } from '@middlewares/auth.middlew
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';
+import { Publisher } from './services/publisher.service';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -46,6 +47,8 @@ export class App {
     this.initApolloServer(resolvers);
     // set up error handling
     this.initializeErrorHandling();
+
+    this.subscribe();
   }
 
   public async listen() {
@@ -67,12 +70,15 @@ export class App {
     logger.info(`Database Connection status: ${await dbConnection()}`);
   }
 
-  private async startEventListener() {
-    await new GetEvents().startEventListener();
-    console.log("event listener started ")
+  private async subscribe() {
+    const pub = new Publisher().getInstance();
+    await pub.subscribe();
   }
 
-
+  private async startEventListener() {
+    await new GetEvents().startEventListener();
+    console.log('event listener started ');
+  }
 
   private initializeMiddlewares() {
     if (this.env === 'production') {
