@@ -106,6 +106,16 @@ export class App {
       standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
       legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
     }))
+
+    // set permission-policy
+    this.app.use((req, res, next) => {
+      res.setHeader(
+        "Permissions-Policy",
+        "fullscreen=(self), microphone=(), camera=(), payment=()geolocation=(), interest-cohort=(), accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), compute-pressure=(), display-capture=(), document-domain=(), encrypted-media=(), gamepad=() gyroscope=(), hid=(), identity-credentials-get(), idle-detection=(), local-fonts=(), magnetometer=(), microphone=(), midi=(),  otp-credentials(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=() speaker-selection=(), storage-access=(), usb=(), web-share=(), window-management=(), xe-spatial-tracking=()"
+
+      );
+      next();
+    })
   }
 
   // set up the Apollo Server with the provided resolvers
