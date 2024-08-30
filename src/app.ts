@@ -78,20 +78,20 @@ export class App {
 
     if (this.env === 'production') {
       this.app.use(hpp());
-
-      this.app.use(helmet({
-        contentSecurityPolicy: {
-          directives: CSP_RULES
-        },
-        referrerPolicy: { policy: "no-referrer" },
-        xContentTypeOptions: false,
-        xDownloadOptions: false,
-        xFrameOptions: { action: "deny" },
-        xPoweredBy: false,
-
-      }));
     }
 
+    this.app.use(helmet({
+      contentSecurityPolicy: {
+        directives: CSP_RULES,
+
+      },
+      referrerPolicy: { policy: "no-referrer" },
+      xContentTypeOptions: false,
+      xDownloadOptions: false,
+      xFrameOptions: { action: "deny" },
+      xPoweredBy: false
+    }));
+    this.app.use(helmet.hidePoweredBy())
     this.app.use(cors({ origin: ORIGIN, credentials: CREDENTIALS }));
     // Adds compression middleware to reduce the size of the response body
     this.app.use(compression());
