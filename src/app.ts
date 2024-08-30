@@ -6,8 +6,6 @@ import { ApolloServerPluginLandingPageProductionDefault, ApolloServerPluginLandi
 import { ApolloServer } from 'apollo-server-express';
 //compresses response bodies to reduce their size and improve performance
 import compression from 'compression';
-// parses cookies attached to the client request object
-import cookieParser from 'cookie-parser';
 // middleware, which allows you to enable Cross-Origin Resource Sharing
 import cors from 'cors';
 import express from 'express';
@@ -87,7 +85,9 @@ export class App {
         referrerPolicy:{policy:"no-referrer"},
         xContentTypeOptions: false,
         xDownloadOptions:false,
-        xFrameOptions:{action:"deny"}
+        xFrameOptions:{action:"deny"},
+        xPoweredBy: false,
+
       }));
     }
 
@@ -98,8 +98,6 @@ export class App {
     this.app.use(express.json());
     // Adds middleware to parse URL-encoded data
     this.app.use(express.urlencoded({ extended: true }));
-    //TODO: (required?) Adds middleware to parse cookies
-    this.app.use(cookieParser());
   }
 
   // set up the Apollo Server with the provided resolvers

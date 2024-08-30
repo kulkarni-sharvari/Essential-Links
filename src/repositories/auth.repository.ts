@@ -24,11 +24,6 @@ const createToken = (user: User): TokenData => {
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
 };
 
-// Method to create a cookie string for storing the JWT
-const createCookie = (tokenData: TokenData): string => {
-  return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
-};
-
 @EntityRepository(UserEntity)
 export class AuthRepository {
   /**
@@ -94,9 +89,9 @@ export class AuthRepository {
   /**
    * Handles user login functionality.
    * @param userData - User login details.
-   * @returns Object containing cookie, user data, and token data.
+   * @returns Object containing user data, and token data.
    */
-  public async userLogIn(userData: UserLoginDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {
+  public async userLogIn(userData: UserLoginDto): Promise<{ findUser: User; tokenData: TokenData }> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
 
@@ -104,9 +99,8 @@ export class AuthRepository {
     if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
 
     const tokenData = createToken(findUser);
-    const cookie = createCookie(tokenData);
 
-    return { cookie, findUser, tokenData };
+    return { findUser, tokenData };
   }
 
   /**

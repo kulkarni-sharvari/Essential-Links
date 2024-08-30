@@ -7,9 +7,6 @@ import { HttpException } from '@exceptions/HttpException';
 import { RequestWithUser, DataStoredInToken } from '@interfaces/auth.interface';
 
 const getAuthorization = req => {
-  const cookie = req.cookies['Authorization'];
-  if (cookie) return cookie;
-
   const header = req.header('Authorization');
   if (header) return header.split('Bearer ')[1];
 
