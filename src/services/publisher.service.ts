@@ -1,13 +1,12 @@
 import path from 'path';
 import { PubSub } from '@google-cloud/pubsub';
 import { TeaSupplyChain } from './blockchain/teaSupplyChain.service';
-import { GetWalletInfo } from '@/utils/getWalletInfo';
-
+import { logger } from '@/utils/logger';
+import { TransactionHandler } from './blockchain/transactionHandler.service';
 const keyFilePath: string = path.join(__dirname, '../config/pub-sub.json');
 const topicName = process.env.TOPIC_NAME;
 const subscriptionName = process.env.SUB_NAME;
-const tsc = new TeaSupplyChain().getInstance();
-
+const transactionHander = new TransactionHandler().getInstance();
 class Publisher {
   private pubSubClient: PubSub;
   private topicName: string;
@@ -22,12 +21,15 @@ class Publisher {
     this.subName = subscriptionName;
   }
 
-  public async publish(tx: any): Promise<string> {
-    const dataBuffer = Buffer.from(JSON.stringify(tx));
+  public async publish(tx: any): Promise<any> {
     try {
-      return await this.pubSubClient.topic(this.topicName).publishMessage({ data: dataBuffer });
+      const requestId = await transactionHander.addTxToDb(tx);
+      tx['requestId'] = requestId;
+      const dataBuffer = Buffer.from(JSON.stringify(tx));
+      await this.pubSubClient.topic(this.topicName).publishMessage({ data: dataBuffer });
+      return requestId;
     } catch (error) {
-      console.error(`Received error while publishing: ${(error as Error).message}`);
+      logger.error(`Received error while publishing: ${(error as Error).message}`);
       process.exitCode = 1;
       throw error;
     }
@@ -41,32 +43,19 @@ class Publisher {
     });
 
     subClient.on('message', this.messageHandler.bind(this));
-    console.log(' Transaction Listenre Started....');
+    logger.info(` Transaction Listenre Started....`);
   }
 
   private async messageHandler(message: any) {
-    console.log('Transaction: ', JSON.parse(message.data));
-    const response = await this.handleTransaction(JSON.parse(message.data));
-    console.log('Response from Blockchain:', JSON.stringify(response));
-    message.ack();
-  }
-
-  private async handleTransaction(tx: any): Promise<string> {
-    let result: string;
-    switch (tx?.methodName) {
-      case 'registerUser':
-        const [accountAddress, userId, role] = tx.payload;
-        result = await tsc.registerUser(accountAddress, userId, role);
-        break;
-
-      default:
-        break;
+    try {
+      await transactionHander.handleTransaction(JSON.parse(message.data));
+      // message.ack();
+    } catch (error) {
+      logger.info(`Error in messageHandler:  ${error.message}`);
+    } finally {
+      message.ack();
+      console.log('Finally');
     }
-    return JSON.stringify(result);
-  }
-
-  private async getUserWalletDetails(userId: number): Promise<string> {
-    return (await new GetWalletInfo().createWalletFromId(userId)).privateKey;
   }
 }
 

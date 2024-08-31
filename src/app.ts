@@ -38,8 +38,6 @@ export class App {
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
 
-    this.connectToDatabase();
-    this.startEventListener();
 
     // set up all middlewares
     this.initializeMiddlewares();
@@ -47,7 +45,8 @@ export class App {
     this.initApolloServer(resolvers);
     // set up error handling
     this.initializeErrorHandling();
-
+    this.connectToDatabase();
+    this.startEventListener();
     this.subscribe();
   }
 
@@ -73,6 +72,8 @@ export class App {
   private async subscribe() {
     const pub = new Publisher().getInstance();
     await pub.subscribe();
+    console.log("Transaction Listener Started .......");
+    
   }
 
   private async startEventListener() {

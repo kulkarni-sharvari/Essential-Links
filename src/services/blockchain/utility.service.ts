@@ -28,7 +28,7 @@ export class Utility {
       };
 
       const res = await contractInstance.methods[method](...payload).send(txObject);
-      return res;
+      return res.transactionHash.toString();
     } catch (error) {
       logger.error(
         `Error in invokeContractPostMethod for method: ${method} with payload: ${JSON.stringify(payload)} from sender: ${senderAddress} - ${

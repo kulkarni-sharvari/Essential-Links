@@ -55,12 +55,12 @@ export class AuthRepository {
    * @returns The created user data.
    */
 
-  public async userSignUp(userData: CreateUserDto): Promise<User> {
+  public async userSignUp(userData: CreateUserDto): Promise<String> {
     const queryRunner = getConnection().createQueryRunner();
-    await queryRunner.startTransaction();
 
     try {
       // Create user data
+      await queryRunner.startTransaction();
       const hashedPassword = await hash(userData.password, 10);
       const walletObj = new CreateWallet().createUserWallet();
       const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
@@ -77,21 +77,15 @@ export class AuthRepository {
         privateKey: encryptedKey,
         userId: createUserData.id,
       });
+
       const payload = [createUserData.walletAddress, createUserData.id, userData.role];
       const tx = {
         methodName: 'registerUser',
         payload: payload,
         userId: createUserData.id,
       };
-
-      // Register the user on the blockchain
-      //const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      // const res = await tsc.registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      // console.log('tx Receipt', res);
-      await publisher.publish(tx);
-
       await queryRunner.commitTransaction();
-      return createUserData;
+      return await publisher.publish(tx);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new HttpException(500, `User registration failed: ${error.message}`);

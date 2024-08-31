@@ -29,13 +29,12 @@ export class AuthResolver extends AuthRepository {
   }
 
   // `Mutation`: A decorator used to define GraphQL mutations, which are operations that modify data
-  @Mutation(() => User, {
+  @Mutation(() => String, {
     description: 'User signup',
   })
   //`Arg`: A decorator used to inject GraphQL arguments into resolver methods.
-  async signup(@Arg('userData') userData: CreateUserDto): Promise<User> {
-    const user: User = await this.userSignUp(userData);
-    return user;
+  async signup(@Arg('userData') userData: CreateUserDto): Promise<String> {
+    return `Your signup request submitted successfully. Request Id: ${await this.userSignUp(userData)}.`;
   }
 
   @Mutation(() => JWTUser, {
