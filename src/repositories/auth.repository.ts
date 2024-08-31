@@ -13,6 +13,10 @@ import { CreateWallet } from '@/services/createWallet';
 import { CryptoUtil } from '@/utils/crypto';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
+import { logger } from '@/utils/logger';
+import { containsEnumKey } from '@/utils/getErrorFromEnums';
+import { DB_EXCEPTION_CODES, HTTP_STATUS_CODE } from '@/constants';
+import { DBException } from '@/exceptions/DBException';
 
 const tsc = new TeaSupplyChain().getInstance();
 
@@ -79,7 +83,9 @@ export class AuthRepository {
       return createUserData;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new HttpException(500, `User registration failed: ${error.message}`);
+      logger.error('Error in processingCreate method:', error);
+      const x = containsEnumKey(DB_EXCEPTION_CODES,error.message)
+      throw new DBException(HTTP_STATUS_CODE.BAD_REQUEST, DB_EXCEPTION_CODES[x]);
     } finally {
       await queryRunner.release();
     }
