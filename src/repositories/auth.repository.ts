@@ -74,7 +74,6 @@ export class AuthRepository {
       // Register the user on the blockchain
       //const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
       const res = await tsc.registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      console.log('tx Receipt', res);
 
       await queryRunner.commitTransaction();
       return createUserData;
@@ -96,7 +95,7 @@ export class AuthRepository {
     if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
 
     const isPasswordMatching: boolean = await compare(userData.password, findUser.password);
-    if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
+    if (!isPasswordMatching) throw new HttpException(409, 'Invalid credentials. Eithor email or password is incorrect');
 
     const tokenData = createToken(findUser);
 

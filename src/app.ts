@@ -154,7 +154,10 @@ export class App {
       formatError: error => {
         try {
           errorLogger(error);
-          return error;
+          return {
+            status: error.extensions.exception.status,
+            message: error.message
+          };
         } catch (err) {
           return new Error(err);
         }
