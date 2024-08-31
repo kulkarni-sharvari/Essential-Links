@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.26;
 
 import './interfaces/IFarmer.sol';
 import './interfaces/IUser.sol';
@@ -11,7 +11,7 @@ import './interfaces/IShipment.sol';
  * @dev Implementation of the supply chain system with user registration and harvest recording.
  */
 contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
-  address private admin;
+  address private immutable admin;
 
   struct PacketHistory {
     HarvestDetails harvestDetails;
@@ -21,7 +21,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
   mapping(address => User) private userDetails;
   mapping(address => string[]) private farmerIdToHarvestIds;
   mapping(string => HarvestDetails) private harvestIdToHarvestDetails;
-  mapping(string => PROCESSING_STATUS) private harvestIdToProcessingDetails;
+  mapping(string => ProcessingStatus) private harvestIdToProcessingDetails;
   mapping(string => BatchDetails) private batchIdToBatchDetails;
   mapping(string => ConsignmentDetails) private consignmentIdToConsignmentDetails;
   mapping(string => string) private batchIdsToConsignmentDetails;
@@ -47,7 +47,8 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @param role Role of the user in the supply chain.
    */
   function registerUser(address accountAddress, string calldata userId, ROLE role) external override onlyOwner {
-    userDetails[accountAddress] = User({userId: userId, accountAddress: accountAddress, role: role, timestamp: block.timestamp});
+    require(accountAddress != address(0), 'Invalid address');
+    userDetails[accountAddress] = User({userId: userId, accountAddress: accountAddress, role: ROLE(role), timestamp: block.timestamp});
     emit UserRegistered(accountAddress, userId, role, block.timestamp);
   }
 
@@ -57,7 +58,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @return The user's details.
    */
   function getUserDetails(address accountAddress) external view override returns (User memory) {
-    // require(accountAddress != address(0), 'Invalid address');
+    require(accountAddress != address(0), 'Invalid address');
     return userDetails[accountAddress];
   }
 
@@ -74,8 +75,9 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata date,
     string calldata quality,
     string calldata quantity,
-    string calldata location /*onlyRole(ROLE.FARMER)*/
-  ) external override {
+    string calldata location
+  ) external override onlyRole(ROLE.FARMER) {
+    require(bytes(harvestIdToHarvestDetails[harvestId].harvestId).length == 0, 'Harvest ID already exists');
     _storeHarvest(harvestId, date, quality, quantity, location);
   }
 
@@ -116,9 +118,7 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @return The harvest's details.
    */
   function getHarvestDetails(string calldata harvestId) external view override returns (HarvestDetails memory) {
-    // require(bytes(harvestId).length > 0, 'Harvest ID is required');
-    // require(harvestIdToHarvestDetails[harvestId].farmerId != address(0), 'Harvest ID does not exist');
-
+    require(bytes(harvestIdToHarvestDetails[harvestId].harvestId).length != 0, 'Harvest ID does not exist');
     return harvestIdToHarvestDetails[harvestId];
   }
 
@@ -127,8 +127,8 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @param harvestId Unique ID of the harvest.
    * @param status Processing status of the harvest.
    */
-  function recordProcessing(string calldata harvestId, PROCESSING_STATUS status /*onlyRole(ROLE.PROCESSING_PLANT) */) external override {
-    // require(harvestIdToHarvestDetails[harvestId].farmerId != address(0), 'Harvest ID does not exist');
+  function recordProcessing(string calldata harvestId, ProcessingStatus status) external override onlyRole(ROLE.PROCESSING_PLANT) {
+    require(bytes(harvestIdToHarvestDetails[harvestId].harvestId).length != 0, 'Harvest ID does not exist');
     harvestIdToProcessingDetails[harvestId] = status;
     emit ProcessingDetailsUpdated(harvestId, status, block.timestamp);
   }
@@ -138,7 +138,9 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
    * @param harvestId Unique ID of the harvest.
    * @return The processing status of the harvest.
    */
-  function getProcessingStatus(string calldata harvestId) external view override returns (PROCESSING_STATUS) {
+  function getProcessingStatus(string calldata harvestId) external view override returns (ProcessingStatus) {
+    require(bytes(harvestIdToHarvestDetails[harvestId].harvestId).length != 0, 'Harvest ID does not exist');
+
     return harvestIdToProcessingDetails[harvestId];
   }
 
@@ -153,20 +155,32 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata batchId,
     string calldata harvestId,
     string calldata quantity,
-    string[] calldata packetIds /*onlyRole(ROLE.PROCESSING_PLANT)*/
-  ) external override {
-    BatchDetails memory newBatch = BatchDetails({
-      batchId: batchId,
-      harvestId: harvestId,
-      packetQuantity: quantity,
-      packetIds: packetIds,
-      timestamp: block.timestamp
-    });
+    string[] calldata packetIds
+  ) external override onlyRole(ROLE.PROCESSING_PLANT) {
+    require(bytes(batchIdToBatchDetails[batchId].batchId).length == 0, 'Batch ID alredy exist');
 
-    batchIdToBatchDetails[batchId] = newBatch;
+    batchIdToBatchDetails[batchId].batchId = batchId;
+    batchIdToBatchDetails[batchId].harvestId = harvestId;
+    batchIdToBatchDetails[batchId].packetQuantity = quantity;
+    batchIdToBatchDetails[batchId].timestamp = block.timestamp;
+
+    for (uint256 i = 0; i < packetIds.length; i++) {
+      batchIdToBatchDetails[batchId].packetIds.push(packetIds[i]);
+    }
 
     emit BatchCreated(batchId, harvestId, quantity, packetIds, block.timestamp);
     emit PacketsCreated(batchId, packetIds, block.timestamp);
+  }
+
+  /**
+   * @dev Retrieves the details of a Batch.
+   * @param batchId Unique ID of the Batch.
+   * @return The Batch details.
+   */
+  function getBatchDetails(string calldata batchId) external view returns (BatchDetails memory) {
+    require(bytes(batchIdToBatchDetails[batchId].batchId).length != 0, 'Batch ID does not exist');
+
+    return batchIdToBatchDetails[batchId];
   }
 
   /**
@@ -182,27 +196,38 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string[] calldata batchIds,
     string calldata carrier,
     string calldata departureDate,
-    string calldata eta /*onlyRole(ROLE.SHIPMENT)**/
-  ) external override {
-    // // require(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId.length == 0, 'Consignment ID already exists');
+    string calldata eta
+  ) external override onlyRole(ROLE.SHIPMENT) {
+    require(bytes(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId).length == 0, 'Consignment ID alredy exist');
 
-    Consignment memory newConsignment = Consignment({
-      consignmentId: consignmentId,
-      batchIds: batchIds,
-      carrier: carrier,
-      departureDate: departureDate,
-      eta: eta,
-      timestamp: block.timestamp
-    });
-
-    OtherDetails memory otherDetails = OtherDetails({temperature: '', humidity: '', status: ConsignmentStatus.TRANSIT, timestamp: block.timestamp});
-
-    consignmentIdToConsignmentDetails[consignmentId] = ConsignmentDetails({consignment: newConsignment, otherDetails: otherDetails});
+    // require(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId.length == 0, 'Consignment ID already exists');
+    consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId = consignmentId;
+    consignmentIdToConsignmentDetails[consignmentId].consignment.carrier = carrier;
+    consignmentIdToConsignmentDetails[consignmentId].consignment.departureDate = departureDate;
+    consignmentIdToConsignmentDetails[consignmentId].consignment.eta = eta;
+    consignmentIdToConsignmentDetails[consignmentId].consignment.timestamp = block.timestamp;
     for (uint256 i = 0; i < batchIds.length; i++) {
+      consignmentIdToConsignmentDetails[consignmentId].consignment.batchIds.push(batchIds[i]);
       batchIdsToConsignmentDetails[batchIds[i]] = consignmentId;
     }
 
+    consignmentIdToConsignmentDetails[consignmentId].otherDetails.temperature = '';
+    consignmentIdToConsignmentDetails[consignmentId].otherDetails.humidity = '';
+    consignmentIdToConsignmentDetails[consignmentId].otherDetails.status = ConsignmentStatus.TRANSIT;
+    consignmentIdToConsignmentDetails[consignmentId].otherDetails.timestamp = block.timestamp;
+
     emit ConsignmentCreated(consignmentId, batchIds, carrier, departureDate, eta, block.timestamp);
+  }
+
+  /**
+   * @dev Retrieves the details of a consignment.
+   * @param consignmentId Unique ID of the consignment.
+   * @return The consignment's details.
+   */
+  function getConsignmentDetails(string calldata consignmentId) external view override returns (ConsignmentDetails memory) {
+    require(bytes(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId).length != 0, 'Consignment ID does not exist');
+
+    return consignmentIdToConsignmentDetails[consignmentId];
   }
 
   /**
@@ -216,8 +241,10 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
     string calldata consignmentId,
     string calldata temperature,
     string calldata humidity,
-    ConsignmentStatus status /*onlyRole(ROLE.SHIPMENT)**/
-  ) external override {
+    ConsignmentStatus status
+  ) external override onlyRole(ROLE.SHIPMENT) {
+    require(bytes(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId).length != 0, 'Consignment ID does not exist');
+
     // require(consignmentIdToConsignmentDetails[consignmentId].consignment.consignmentId.length > 0, 'Consignment ID does not exist');
 
     consignmentIdToConsignmentDetails[consignmentId].otherDetails.temperature = temperature;
@@ -228,30 +255,27 @@ contract SupplyChain is IUser, IFarmer, IProcessingPlant, IShipment {
   }
 
   /**
-   * @dev Retrieves the details of a consignment.
-   * @param consignmentId Unique ID of the consignment.
-   * @return The consignment's details.
+   * @dev Retrieves the history of packets for a given batch ID.
+   * @param batchId The unique identifier of the batch for which the packet history is being queried.
+   * @return packetHistory A `PacketHistory` struct containing details of the batch, consignment, and harvest.
+   *
+   * Requirements:
+   * - The `batchId` must be valid and exist in the mappings.
    */
-  function getConsignmentDetails(string calldata consignmentId) external view override returns (ConsignmentDetails memory) {
-    return consignmentIdToConsignmentDetails[consignmentId];
-  }
+  function getPacketHistory(string calldata batchId) external view returns (PacketHistory memory packetHistory) {
+    require(bytes(batchIdToBatchDetails[batchId].batchId).length != 0, 'Batch ID does not exist');
 
-  function getPacketHistory(string calldata _batchId) external view returns (PacketHistory memory) {
-    PacketHistory memory packetHistory;
-    packetHistory.batchDetails = batchIdToBatchDetails[_batchId];
-    packetHistory.consignmentDeails = consignmentIdToConsignmentDetails[batchIdsToConsignmentDetails[_batchId]];
-    packetHistory.harvestDetails = harvestIdToHarvestDetails[batchIdToBatchDetails[_batchId].harvestId];
+    // Retrieve and set batch details
+    packetHistory.batchDetails = batchIdToBatchDetails[batchId];
+
+    // Retrieve and set consignment details based on the batch ID
+    string memory consignmentId = batchIdsToConsignmentDetails[batchId];
+    packetHistory.consignmentDeails = consignmentIdToConsignmentDetails[consignmentId];
+
+    // Retrieve and set harvest details based on the harvest ID in batch details
+    string memory harvestId = packetHistory.batchDetails.harvestId;
+    packetHistory.harvestDetails = harvestIdToHarvestDetails[harvestId];
 
     return packetHistory;
-  }
-
-  function getPacketHistoryByBatchId(
-    string calldata _batchId
-  ) external view returns (HarvestDetails memory, BatchDetails memory, ConsignmentDetails memory) {
-    BatchDetails storage batchDetails = batchIdToBatchDetails[_batchId];
-    ConsignmentDetails storage consignmentDetails = consignmentIdToConsignmentDetails[batchIdsToConsignmentDetails[_batchId]];
-    HarvestDetails storage harvestDetails = harvestIdToHarvestDetails[batchIdToBatchDetails[_batchId].harvestId];
-
-    return (harvestDetails, batchDetails, consignmentDetails);
   }
 }
