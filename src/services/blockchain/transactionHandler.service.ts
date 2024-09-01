@@ -7,6 +7,8 @@ import { GetWalletInfo } from '@/utils/getWalletInfo';
 import uniqid from 'uniqid';
 import { getConnection, QueryRunner } from 'typeorm';
 import { TeaHarvestsEntity } from '@/entities/harvests.entity';
+import { ProcessingEntity } from '@/entities/processing.entity';
+import { ConsignmentEntity } from '@/entities/consignment.entity';
 
 // Singleton instance of TeaSupplyChain
 const tsc = new TeaSupplyChain().getInstance();
@@ -33,6 +35,13 @@ class TransactionHandler {
           return await this.handleRecordHarvest(tx);
         case 'recordProcessing':
           return await this.handleRecordProcessing(tx);
+        case 'createBatch':
+          return await this.handleCreateBatch(tx);
+        case 'createConsignment':
+          return await this.handleCreateConsignment(tx);
+        case 'updateConsignment':
+          return await this.handleUpdateConsignment(tx);
+
         default:
           throw new Error(`Unsupported transaction method: ${tx.methodName}`);
       }
@@ -53,11 +62,11 @@ class TransactionHandler {
   private async handleUserRegistration(tx: any): Promise<void> {
     const requestId: string = tx.requestId;
     const userId: number = tx.userId;
+    const entityId = userId.toString();
     const queryRunner = getConnection().createQueryRunner();
     let txHash: string = 'N.A';
 
     try {
-
       const [accountAddress, _, userRole] = tx.payload;
       txHash = await tsc.registerUser(accountAddress, userId, userRole);
 
@@ -73,7 +82,7 @@ class TransactionHandler {
       );
       await queryRunner.commitTransaction();
     } catch (error) {
-      await this.handleTransactionError(queryRunner, requestId, userId, error, 'UserRegistration');
+      await this.handleTransactionError(queryRunner, requestId, userId, error, 'UserRegistration', entityId);
     } finally {
       await queryRunner.release();
     }
@@ -92,11 +101,11 @@ class TransactionHandler {
     const userId: number = tx.userId;
     const queryRunner = getConnection().createQueryRunner();
     let txHash: string = 'N.A';
-    let harvestID;
+    let entityId;
 
     try {
       const [harvestId, harvestDate, quality, quantity, location] = tx.payload;
-      harvestID = harvestId;
+      entityId = harvestId;
       const privateKey = await this.getUserWalletDetails(userId);
       txHash = await tsc.recordHarvest(harvestId, harvestDate, quality, quantity, location, privateKey);
 
@@ -112,7 +121,7 @@ class TransactionHandler {
       );
       await queryRunner.commitTransaction();
     } catch (error) {
-      await this.handleTransactionError(queryRunner, requestId, userId, error, 'RecordHarvest', harvestID);
+      await this.handleTransactionError(queryRunner, requestId, userId, error, 'RecordHarvest', entityId);
     } finally {
       await queryRunner.release();
     }
@@ -156,6 +165,124 @@ class TransactionHandler {
   }
 
   /**
+   * @title handleCreateBatch
+   * @description Handles processing recording transactions. It records processing details on the blockchain and updates the transaction status.
+   *              In case of failure, it updates the transaction status to failed but does not perform additional rollback.
+   * @param tx - Transaction object containing processing details.
+   * @returns {Promise<void>} - Void
+   * @throws {Error} - Throws an error if the recording fails or if database operations fail.
+   */
+  private async handleCreateBatch(tx: any): Promise<void> {
+    const requestId: string = tx.requestId;
+    const userId: number = tx.userId;
+    const queryRunner = getConnection().createQueryRunner();
+    let txHash: string = 'N.A';
+    let entityId: string;
+
+    try {
+      const [harvestId, batchId, quantity, packetIds] = tx.payload;
+      const privateKey = await this.getUserWalletDetails(userId);
+      entityId = batchId;
+      txHash = await tsc.createBatch(harvestId, batchId, quantity, packetIds, privateKey);
+
+      await queryRunner.startTransaction();
+      await queryRunner.manager.update(
+        TransactionEntity,
+        { requestId },
+        {
+          status: 'COMPLETED',
+          txHash,
+          errorMessage: 'N.A',
+        },
+      );
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await this.handleTransactionError(queryRunner, requestId, userId, error, 'CreateBatch', entityId);
+      logger.error(`Error in handleCreateBatch ${error}`);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * @title handleCreateConsignment
+   * @description Handles processing recording transactions. It records processing details on the blockchain and updates the transaction status.
+   *              In case of failure, it updates the transaction status to failed but does not perform additional rollback.
+   * @param tx - Transaction object containing processing details.
+   * @returns {Promise<void>} - Void
+   * @throws {Error} - Throws an error if the recording fails or if database operations fail.
+   */
+  private async handleCreateConsignment(tx: any): Promise<void> {
+    const requestId: string = tx.requestId;
+    const userId: number = tx.userId;
+    const queryRunner = getConnection().createQueryRunner();
+    let txHash: string = 'N.A';
+    let entityId: string;
+
+    try {
+      const [consignmentId, batchIds, carrier, departureDate, eta] = tx.payload;
+      const privateKey = await this.getUserWalletDetails(userId);
+      entityId = consignmentId;
+      txHash = await tsc.createConsignment(consignmentId, batchIds, carrier, departureDate, eta, privateKey);
+      await queryRunner.startTransaction();
+      await queryRunner.manager.update(
+        TransactionEntity,
+        { requestId },
+        {
+          status: 'COMPLETED',
+          txHash,
+          errorMessage: 'N.A',
+        },
+      );
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await this.handleTransactionError(queryRunner, requestId, userId, error, 'CreateConsignment', entityId);
+      logger.error(`Error in handleCreateBatch ${error}`);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * @title handleUpdateConsignment
+   * @description Handles processing recording transactions. It records processing details on the blockchain and updates the transaction status.
+   *              In case of failure, it updates the transaction status to failed but does not perform additional rollback.
+   * @param tx - Transaction object containing processing details.
+   * @returns {Promise<void>} - Void
+   * @throws {Error} - Throws an error if the recording fails or if database operations fail.
+   */
+  private async handleUpdateConsignment(tx: any): Promise<void> {
+    const requestId: string = tx.requestId;
+    const userId: number = tx.userId;
+    const queryRunner = getConnection().createQueryRunner();
+    let txHash: string = 'N.A';
+    let entityId: string;
+
+    try {
+      const [consignmentId, temperature, humidity, track] = tx.payload;
+      const privateKey = await this.getUserWalletDetails(userId);
+      entityId = consignmentId;
+      txHash = await tsc.updateConsignment(consignmentId, temperature, humidity, track, privateKey);
+      await queryRunner.startTransaction();
+      await queryRunner.manager.update(
+        TransactionEntity,
+        { requestId },
+        {
+          status: 'COMPLETED',
+          txHash,
+          errorMessage: 'N.A',
+        },
+      );
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await this.handleTransactionError(queryRunner, requestId, userId, error, 'UpdateConsignment', entityId);
+      logger.error(`Error in handleCreateBatch ${error}`);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
    * @title handleTransactionError
    * @description Handles errors during transaction processing. It updates the transaction status to failed and performs necessary rollbacks.
    *              If needed, deletes associated records from the database.
@@ -164,7 +291,7 @@ class TransactionHandler {
    * @param userId - The ID of the user involved in the transaction.
    * @param error - The error that occurred during transaction processing.
    * @param context - The context or type of transaction that failed (e.g., 'UserRegistration').
-   * @param harvestID - Optional ID of the harvest, used only if the context is 'RecordHarvest'.
+   * @param entityId - Optional ID of the harvest, used only if the context is 'RecordHarvest'.
    * @returns {Promise<void>} - Void
    * @throws {Error} - Throws an error if the rollback fails.
    */
@@ -174,7 +301,7 @@ class TransactionHandler {
     userId: number,
     error: Error,
     context: string,
-    harvestID?: string,
+    entityId?: string,
   ): Promise<void> {
     try {
       await queryRunner.startTransaction();
@@ -189,12 +316,22 @@ class TransactionHandler {
       );
 
       if (context === 'UserRegistration') {
+        logger.info(`Deleting wallet and user details due to UserRegistration failure : ${userId}`);
         await queryRunner.manager.delete(WalletEntity, { userId });
         await queryRunner.manager.delete(UserEntity, { id: userId });
-        logger.info(`Deleted wallet and user details for user ID: ${userId}`);
       } else if (context === 'RecordHarvest') {
-        await queryRunner.manager.delete(TeaHarvestsEntity, { harvestId: harvestID });
-        logger.info(`Deleted Harvest ID: ${harvestID}`);
+        await queryRunner.manager.delete(TeaHarvestsEntity, { harvestId: entityId });
+        logger.info(`Deleted Harvest ID due to RecordHarvest failure: ${entityId}`);
+      } else if (context === 'CreateBatch') {
+        logger.info(`Deleting Harvest ID due to CreateBatch failure: ${entityId}`);
+        await queryRunner.manager.delete(ProcessingEntity, { harvestId: entityId });
+        await queryRunner.manager.delete(TeaHarvestsEntity, { harvestId: entityId });
+      } else if (context === 'CreateConsignment') {
+        logger.info(`Deleting Coinsignment ID due to CreateConsignment failure: ${entityId}`);
+        await queryRunner.manager.delete(ConsignmentEntity, { shipmentId: entityId });
+      } else if (context === 'UpdateConsignment') {
+        logger.info(`Deleting Coinsignment Update due to UpdateConsignment failure: ${entityId}`);
+        // await queryRunner.manager.delete(EnvironmentEntity, { shipmentId: entityId });
       }
 
       await queryRunner.commitTransaction();

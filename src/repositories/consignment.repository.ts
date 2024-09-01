@@ -3,17 +3,17 @@ import { ConsignmentEntity } from '@/entities/consignment.entity';
 import { EnvironmentEntity } from '@/entities/environment.entity';
 import { DBException } from '@/exceptions/DBException';
 import { HttpException } from '@/exceptions/HttpException';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
+import { Publisher } from '@/services/publisher.service';
 
-const tsc = new TeaSupplyChain().getInstance();
+const publisher = new Publisher().getInstance();
 
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
   //TODO:
-  async consignmentCreate(consignments: ConsignmentDto, userData: any, walletData: any) {
+  async consignmentCreate(consignments: ConsignmentDto, userData: any): Promise<string> {
     const shipmentId = uniqid();
 
     // loop over the consignment[] to create bulk records
@@ -33,29 +33,24 @@ export class ConsignmentRepository {
       await ConsignmentEntity.createQueryBuilder().insert().into(ConsignmentEntity).values(newConsignments).execute();
       logger.info('Created new consignment');
       // query DB with said {shipmentId}
-      const allShipments = await this.getAllConsignmentByID(shipmentId);
+      await this.getAllConsignmentByID(shipmentId);
       const batchIds = consignments.batchId.map(batch => batch.toString());
 
-      // await new TeaSupplyChain().createConsignment(
-      //   shipmentId.toString(),
-      //   batchIds,
-      //   consignments.carrier,
-      //   consignments.departureDate.toISOString(),
-      //   consignments.expectedArrivalDate.toISOString(),
-      //   walletData.privateKey,
-      // );
-
-            await tsc.createConsignment(
+      const payload = [
         shipmentId.toString(),
         batchIds,
         consignments.carrier,
         consignments.departureDate.toISOString(),
         consignments.expectedArrivalDate.toISOString(),
-        walletData.privateKey,
-      );
+      ];
+      const tx = {
+        methodName: 'createConsignment',
+        payload: payload,
+        userId: userData.id,
+        entityId: shipmentId.toString(),
+      };
 
-      logger.info(`Returning new consignment:  ${JSON.stringify(allShipments)}`);
-      return allShipments;
+      return await publisher.publish(tx);
     } catch (error) {
       logger.error(`ERROR - creating new consignment ${error}`);
       // throw new DBException(500, error)
@@ -71,9 +66,8 @@ export class ConsignmentRepository {
     try {
       // find if record with {shipmentId}
       const allShipments = await this.getAllConsignmentByID(consignment.shipmentId);
-      if (!allShipments) throw new HttpException(404, "No Records found")
+      if (!allShipments) throw new HttpException(404, 'No Records found');
       else {
-
         // update the blockchainHash in DB
         logger.info(`Updating blockchainHash for ${consignment.shipmentId}`);
 
@@ -117,25 +111,14 @@ export class ConsignmentRepository {
     }
   }
 
-  async consignmentEnvironmentUpdate(consignment: UpdateConsignmentEnvDetailsDto, userWallet: any) {
+  async consignmentEnvironmentUpdate(consignment: UpdateConsignmentEnvDetailsDto, userData: any) {
     try {
       // find if record with {shipmentId}
       const allShipments = await this.getAllConsignmentByID(consignment.shipmentId);
       if (allShipments) {
         // update the blockchainHash
         logger.info(`Updating environment details for ${consignment.shipmentId}`);
-        // const updateConsignments = consignment.batchId.map(c => {
-        //   return {
-        //     batchId: c,
-        //     shipmentId: consignment.shipmentId,
-        //     track: consignment.track,
-        //     temperature: consignment.temperature,
-        //     humidity: consignment.humidity
-        //   };
-        // });
-        const updatedEnv = await EnvironmentEntity
-          .upsert(consignment, ['shipmentId'])
-        console.log(updatedEnv)
+        const updatedEnv = await EnvironmentEntity.upsert(consignment, ['shipmentId']);
         // if track is changed then record the same in shipment table
         const trackUpdateObj: UpdateConsignmentStatusDto = {
           shipmentId: consignment.shipmentId,
@@ -144,12 +127,20 @@ export class ConsignmentRepository {
         };
         await this.consignmentStatusUpdate(trackUpdateObj);
 
-        // trigger blockchain for changes
-        // await new TeaSupplyChain()
-        //   .updateConsignment(consignment.shipmentId, consignment.temperature, consignment.humidity, consignment.track, userWallet.privateKey)
-         await tsc.updateConsignment(consignment.shipmentId, consignment.temperature, consignment.humidity, consignment.track, userWallet.privateKey)
+        const payload = [
+          consignment.shipmentId.toString(),
+          consignment.temperature.toString(),
+          consignment.humidity.toString(),
+          consignment.track.toString(),
+        ];
+        const tx = {
+          methodName: 'updateConsignment',
+          payload: payload,
+          userId: userData.id,
+          entityId: consignment.shipmentId.toString(),
+        };
 
-        logger.info(`Updated environment details for ${consignment.shipmentId}`);
+        return await publisher.publish(tx);
       }
       //return all the records that are updated
       const allEnvRecords = await this.getAllEnvByID(consignment.shipmentId);

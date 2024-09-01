@@ -3,7 +3,6 @@ import { PacketsEntity } from '@/entities/packets.entity';
 import { ProcessingEntity } from '@/entities/processing.entity';
 import { DBException } from '@/exceptions/DBException';
 import { Processing } from '@/interfaces/processing.interface';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { Batches } from '@/typedefs/batches.type';
 import { Packets } from '@/typedefs/packets.type';
 import { logger } from '@/utils/logger';
@@ -11,8 +10,6 @@ import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
 import { Publisher } from '@/services/publisher.service';
 const publisher = new Publisher().getInstance();
-
-const tsc = new TeaSupplyChain().getInstance();
 
 @EntityRepository(ProcessingEntity)
 export class ProcessingRepository {
@@ -22,7 +19,7 @@ export class ProcessingRepository {
    * @param userWallet - The wallet of the user making the request.
    * @returns The created processing record.
    */
-  public async processingCreate(processingInput: CreateProcessingDto, userWallet: any, userId: number): Promise<any> {
+  public async processingCreate(processingInput: CreateProcessingDto, userId: number): Promise<any> {
     try {
       const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput, packagingPlantId: userId }).save();
 
@@ -63,7 +60,7 @@ export class ProcessingRepository {
    * @param userWallet - The wallet of the user making the request.
    * @returns The created batch information.
    */
-  public async batchCreate(batchInput: CreateBatchDto, userWallet: any): Promise<Batches> {
+  public async batchCreate(batchInput: CreateBatchDto, userId: number): Promise<Batches> {
     batchInput['packetWeight'] = '50g';
 
     logger.info('Creating batchId');
@@ -95,10 +92,15 @@ export class ProcessingRepository {
         packages: packages.map(({ packageId }) => packageId as string),
       };
 
-      const result = await tsc.createBatch(batchId, batchInput.harvestId, batchInput.noOfPackets.toString(), batch.packages, userWallet.privateKey);
-      logger.info('Batch created on blockchain:', result);
+      const payload = [batchInput.harvestId, batchId, batchInput.noOfPackets.toString(), batch.packages];
+      const tx = {
+        methodName: 'createBatch',
+        payload: payload,
+        userId: userId,
+        entityId: batchId,
+      };
+      return await publisher.publish(tx);
 
-      return batch;
     } catch (error) {
       logger.error('Error in batchCreate method:', error);
       throw new DBException(500, error.message);

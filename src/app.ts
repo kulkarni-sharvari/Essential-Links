@@ -1,27 +1,16 @@
-// polyfill to add ability to use metadata in TS. i,e Decorator
 import 'reflect-metadata';
-// generate a landing page for GraphQL queries and mutations
 import { ApolloServerPluginLandingPageProductionDefault, ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
-//create a GraphQL server
 import { ApolloServer } from 'apollo-server-express';
-//compresses response bodies to reduce their size and improve performance
 import compression from 'compression';
-// parses cookies attached to the client request object
 import cookieParser from 'cookie-parser';
-// middleware, which allows you to enable Cross-Origin Resource Sharing
 import cors from 'cors';
 import express from 'express';
-// middleware that helps secure your Express apps
 import helmet from 'helmet';
-// middleware, which helps prevent HTTP Parameter Pollution attacks by sanitizing query parameters
 import hpp from 'hpp';
-// used to build a GraphQL schema based on TypeScript classes and decorators
 import { buildSchema } from 'type-graphql';
 import { NODE_ENV, PORT, ORIGIN, CREDENTIALS } from '@config';
 import { dbConnection } from '@database';
-//  custom authentication middleware
 import { AuthMiddleware, AuthCheckerMiddleware } from '@middlewares/auth.middleware';
-// custom error-handling middleware
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';

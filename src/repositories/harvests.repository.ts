@@ -3,15 +3,12 @@ import { TeaHarvestsEntity } from '@/entities/harvests.entity';
 import { DBException } from '@/exceptions/DBException';
 import { User } from '@/interfaces/users.interface';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
 
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
 import { Publisher } from '@/services/publisher.service';
 const publisher = new Publisher().getInstance();
-
-const tsc = new TeaSupplyChain().getInstance();
 
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
@@ -20,7 +17,7 @@ export class TeaHarvestsRepository {
    * @param harvestInput takes harvest input object to create record in db
    * @returns updated row in db
    */
-  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId: number): Promise<string> {
+  async harvestCreate(harvestInput: TeaHarvestsDto, userId: number): Promise<string> {
     const queryRunner = getConnection().createQueryRunner();
     await queryRunner.startTransaction();
 
@@ -47,7 +44,6 @@ export class TeaHarvestsRepository {
       
       await queryRunner.commitTransaction();
       return await publisher.publish(tx);
-      // return createHarvestData;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(`Error creating harvest: ${error.message}`, { harvestInput, harvestId });
