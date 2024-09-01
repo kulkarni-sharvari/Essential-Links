@@ -15,13 +15,17 @@ export class TransactionEntity extends BaseEntity implements Transaction {
   @Column({ type: 'varchar', length: 255, nullable: true })
   methodName: string;
 
-  @Column({ type: 'json' })
+  @Column({ type: 'varchar', length:255, nullable:true })
   @IsNotEmpty()
-  payload: object;
+  payload: string;
 
   @Column()
   @IsNotEmpty()
   userId: number;
+
+  @Column()
+  @IsNotEmpty()
+  entityId: string;
 
   @Column({ type: 'varchar', length: 255 })
   @IsNotEmpty()
@@ -33,7 +37,6 @@ export class TransactionEntity extends BaseEntity implements Transaction {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   txHash: string;
-
 
   @Column()
   // Automatically sets the column to the current date when a new record is created

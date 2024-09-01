@@ -8,6 +8,8 @@ import { getConnection } from 'typeorm';
 
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
+import { Publisher } from '@/services/publisher.service';
+const publisher = new Publisher().getInstance();
 
 const tsc = new TeaSupplyChain().getInstance();
 
@@ -18,7 +20,7 @@ export class TeaHarvestsRepository {
    * @param harvestInput takes harvest input object to create record in db
    * @returns updated row in db
    */
-  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId: number): Promise<TeaHarvests> {
+  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId: number): Promise<string> {
     const queryRunner = getConnection().createQueryRunner();
     await queryRunner.startTransaction();
 
@@ -29,18 +31,23 @@ export class TeaHarvestsRepository {
         harvestId,
         userId,
       });
-
-      await tsc.recordHarvest(
+      const payload = [
         harvestId,
         createHarvestData.createdAt.toISOString(),
         createHarvestData.quality,
         createHarvestData.quantity.toString(),
         createHarvestData.location,
-        userWallet.privateKey,
-      );
-
+      ];
+      const tx = {
+        methodName: 'recordHarvest',
+        payload: payload,
+        userId: userId,
+        entityId: harvestId
+      };
+      
       await queryRunner.commitTransaction();
-      return createHarvestData;
+      return await publisher.publish(tx);
+      // return createHarvestData;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(`Error creating harvest: ${error.message}`, { harvestInput, harvestId });

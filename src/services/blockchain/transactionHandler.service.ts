@@ -21,6 +21,9 @@ class TransactionHandler {
       switch (tx.methodName) {
         case 'registerUser':
           return await this.handleUserRegistration(tx, queryRunner);
+        case 'recordHarvest':
+          return await this.handleRecordHarvest(tx, queryRunner);
+
         default:
           throw new Error(`Unsupported transaction method: ${tx.methodName}`);
       }
@@ -51,6 +54,24 @@ class TransactionHandler {
     }
   }
 
+  private async handleRecordHarvest(tx: any, queryRunner: QueryRunner): Promise<void> {
+    const requestId: string = tx.requestId;
+    const userId: number = tx.userId;
+    let txHash: string = 'N.A';
+
+    try {
+      const [harvestId, harvestDate, quality, quantity, location] = tx.payload;
+      const privateKey = await this.getUserWalletDetails(tx.userId);
+      txHash = await tsc.recordHarvest(harvestId, harvestDate, quality, quantity, location, privateKey);
+
+      await queryRunner.startTransaction();
+      await this.updateTransactionStatus(requestId, 'COMPLETED', txHash, 'N.A', queryRunner);
+      await queryRunner.commitTransaction();
+
+    } catch (error) {
+      await this.handleFailedTransaction(requestId, userId, txHash, error, queryRunner);
+    }
+  }
   private async updateTransactionStatus(
     requestId: string,
     status: string,
@@ -99,8 +120,9 @@ class TransactionHandler {
       const res = await queryRunner.manager.save(TransactionEntity, {
         requestId: requestId,
         methodName: tx?.methodName,
-        payload: tx?.payload,
+        payload: tx?.payload.toString(),
         userId: tx?.userId,
+        entityId: tx?.entityId,
         status: 'SUBMITTED',
       });
       logger.info(`Added tx to Transaction Table: ${JSON.stringify(res)}`);

@@ -1,6 +1,9 @@
 import { Arg, Query, Resolver } from 'type-graphql';
 import { UserRepository } from '@repositories/users.repository';
 import { User } from '@typedefs/users.type';
+import { RequestStatusResultUnion } from '@/typedefs/requestStatus.type';
+import { Transaction } from '@/typedefs/transaction.type';
+import { TeaHarvests } from '@/typedefs/teaHarvests.type';
 
 @Resolver()
 
@@ -22,5 +25,21 @@ export class UserResolver extends UserRepository {
   async getUserById(@Arg('userId') userId: number): Promise<User> {
     const user: User = await this.userFindById(userId);
     return user;
+  }
+
+  @Query(() => RequestStatusResultUnion, {
+    description: 'Get Request Details by Id',
+  })
+  async getRequestStatus(@Arg('requestId') requestId: string): Promise<RequestStatusResultUnion> {
+    const result = await this.getRequestDetails(requestId);
+    if (result instanceof User) {
+      return new RequestStatusResultUnion({ userDetails: result });
+    } else if (result instanceof TeaHarvests) {
+      return new RequestStatusResultUnion({ harvestDetails: result });
+    } else if (result instanceof Transaction) {
+      return new RequestStatusResultUnion({ transactionDetails: result });
+    }
+
+    return new RequestStatusResultUnion(); // return an empty instance if no match
   }
 }

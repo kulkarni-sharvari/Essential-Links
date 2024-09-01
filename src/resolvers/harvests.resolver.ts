@@ -14,11 +14,10 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
    * @returns record inserted in DB
    */
   @Authorized([USER_ROLE.FARMER])
-  @Mutation(() => TeaHarvests, { description: 'Creates Harvests' })
-  async createHarvest(@Ctx('user') userData: any, @Arg('harvest') harvestInput: TeaHarvestsDto): Promise<TeaHarvests> {
+  @Mutation(() => String, { description: 'Creates Harvests' })
+  async createHarvest(@Ctx('user') userData: any, @Arg('harvest') harvestInput: TeaHarvestsDto): Promise<string> {
     const userWallet = await new GetWalletInfo().createWalletFromId(userData.id);
-    const harvest = await this.harvestCreate(harvestInput, userWallet, userData.id);
-    return harvest;
+    return `Your Create Harvest request submitted successfully. Request Id: ${await this.harvestCreate(harvestInput, userWallet, userData.id)})`;
   }
 
   /**

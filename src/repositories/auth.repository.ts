@@ -11,11 +11,9 @@ import { User } from '@interfaces/users.interface';
 import { JWTToken } from '@/typedefs/jwtuser.type';
 import { CreateWallet } from '@/services/createWallet';
 import { CryptoUtil } from '@/utils/crypto';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
 import { Publisher } from '@/services/publisher.service';
 
-const tsc = new TeaSupplyChain().getInstance();
 const publisher = new Publisher().getInstance();
 
 // Method to create a JWT for a user
@@ -83,6 +81,7 @@ export class AuthRepository {
         methodName: 'registerUser',
         payload: payload,
         userId: createUserData.id,
+        entityId: createUserData.id
       };
       await queryRunner.commitTransaction();
       return await publisher.publish(tx);
