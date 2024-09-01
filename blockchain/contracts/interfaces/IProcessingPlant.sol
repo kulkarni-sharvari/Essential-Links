@@ -48,7 +48,7 @@ interface IProcessingPlant {
    * @param timestamp The block timestamp when the processing status was updated.
    */
   event ProcessingDetailsUpdated(
-    string indexed harvestId, // Indexing harvestId for efficient filtering
+    string harvestId, // Indexing harvestId for efficient filtering
     ProcessingStatus status,
     uint256 timestamp
   );
@@ -62,8 +62,8 @@ interface IProcessingPlant {
    * @param timestamp The block timestamp when the batch was created.
    */
   event BatchCreated(
-    string indexed batchId, // Indexing batchId for efficient filtering
-    string indexed harvestId, // Indexing harvestId for efficient filtering
+    string batchId, // Indexing batchId for efficient filtering
+    string harvestId, // Indexing harvestId for efficient filtering
     string quantity,
     string[] packetIds,
     uint256 timestamp
@@ -76,7 +76,7 @@ interface IProcessingPlant {
    * @param timestamp The block timestamp when the packets were created.
    */
   event PacketsCreated(
-    string indexed batchId, // Indexing batchId for efficient filtering
+    string batchId, // Indexing batchId for efficient filtering
     string[] packetIds,
     uint256 timestamp
   );

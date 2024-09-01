@@ -71,7 +71,7 @@ interface IShipment {
    * @param timestamp The block timestamp when the consignment was created.
    */
   event ConsignmentCreated(
-    string indexed consignmentId, // Indexing consignmentId for efficient filtering
+    string consignmentId, // Indexing consignmentId for efficient filtering
     string[] batchIds,
     string carrier,
     string departureDate,
@@ -88,7 +88,7 @@ interface IShipment {
    * @param timestamp The block timestamp when the consignment was updated.
    */
   event ConsignmentUpdated(
-    string indexed consignmentId, // Indexing consignmentId for efficient filtering
+    string consignmentId, // Indexing consignmentId for efficient filtering
     string temperature,
     string humidity,
     ConsignmentStatus status,

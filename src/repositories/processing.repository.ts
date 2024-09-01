@@ -9,6 +9,8 @@ import { Packets } from '@/typedefs/packets.type';
 import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
+import { Publisher } from '@/services/publisher.service';
+const publisher = new Publisher().getInstance();
 
 const tsc = new TeaSupplyChain().getInstance();
 
@@ -20,18 +22,19 @@ export class ProcessingRepository {
    * @param userWallet - The wallet of the user making the request.
    * @returns The created processing record.
    */
-  public async processingCreate(processingInput: CreateProcessingDto, userWallet: any, userId: number): Promise<Processing> {
+  public async processingCreate(processingInput: CreateProcessingDto, userWallet: any, userId: number): Promise<any> {
     try {
-      // Interact with the blockchain to record the processing
-      // const res = await new TeaSupplyChain().recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
-      const res = await tsc.recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
-      logger.info('Processing recorded on blockchain:', res);
+      const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput, packagingPlantId: userId }).save();
 
       // Save the processing data in the database
-      console.log(processingInput);
-      
-      const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput, packagingPlantId:userId }).save();
-      return createProcessingData;
+      const payload = [processingInput.harvestId, processingInput.processType];
+      const tx = {
+        methodName: 'recordProcessing',
+        payload: payload,
+        userId: userId,
+        entityId: processingInput.harvestId,
+      };
+      return await publisher.publish(tx);
     } catch (error) {
       logger.error('Error in processingCreate method:', error);
       // throw new DBException(500, error.message);
@@ -92,21 +95,7 @@ export class ProcessingRepository {
         packages: packages.map(({ packageId }) => packageId as string),
       };
 
-      // Interact with the blockchain to create the batch
-      // const result = await new TeaSupplyChain().createBatch(
-      //   batchId,
-      //   batchInput.harvestId,
-      //   batchInput.noOfPackets.toString(),
-      //   batch.packages,
-      //   userWallet.privateKey,
-      // );
-      const result = await tsc.createBatch(
-        batchId,
-        batchInput.harvestId,
-        batchInput.noOfPackets.toString(),
-        batch.packages,
-        userWallet.privateKey,
-      );
+      const result = await tsc.createBatch(batchId, batchInput.harvestId, batchInput.noOfPackets.toString(), batch.packages, userWallet.privateKey);
       logger.info('Batch created on blockchain:', result);
 
       return batch;

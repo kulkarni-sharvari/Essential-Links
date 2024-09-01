@@ -50,7 +50,7 @@ class TeaSupplyChain {
     }
   }
 
-  public async registerUser(accountAddress: string, userId: string, role: string): Promise<any> {
+  public async registerUser(accountAddress: string, userId: number, role: string): Promise<any> {
     try {
       const contractInstance = this.getContractInstance(ADMIN_PK);
       const userRole = USER_ROLES[role];

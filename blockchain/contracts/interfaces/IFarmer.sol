@@ -38,12 +38,12 @@ interface IFarmer {
    * @param timestamp The block timestamp when the harvest was recorded.
    */
   event LeavesHarvested(
-    string indexed harvestId, // Indexing harvestId for efficient filtering
+    string harvestId, // Indexing harvestId for efficient filtering
     string date,
     string quality,
     string quantity,
     string location,
-    address indexed farmerId, // Indexing farmerId for efficient filtering
+    address farmerId, // Indexing farmerId for efficient filtering
     uint256 timestamp
   );
 

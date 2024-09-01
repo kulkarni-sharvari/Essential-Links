@@ -80,6 +80,7 @@ export class UserRepository {
         harvest.quantity = findHarvest.quantity;
         harvest.userId = findHarvest.userId;
         harvest.location = findHarvest.location;
+        harvest.blockchainHash = findHarvest.blockchainHash;
         harvest.createdAt = findHarvest.createdAt;
         return harvest;
 
