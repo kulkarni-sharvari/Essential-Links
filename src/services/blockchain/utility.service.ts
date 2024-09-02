@@ -1,4 +1,3 @@
-import { GAS_LIMIT } from '@/config';
 import { logger } from '@/utils/logger';
 
 export class Utility {
@@ -22,9 +21,10 @@ export class Utility {
   static async invokeContractPostMethod(contractInstance: any, method: string, payload: any[], senderAddress: string): Promise<any> {
     logger.info(`Invoking invokeContractPostMethod with method: ${method} and input: ${JSON.stringify(payload)} from sender: ${senderAddress}`);
     try {
+      const gas = await contractInstance.methods[method](...payload).estimateGas({ from: senderAddress });
       const txObject = {
         from: senderAddress,
-        gas: GAS_LIMIT,
+        gas: gas,
       };
 
       const res = await contractInstance.methods[method](...payload).send(txObject);
