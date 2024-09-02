@@ -61,7 +61,7 @@ export class ConsignmentRepository {
       return await publisher.publish(tx);
     } catch (error) {
       logger.error(`ERROR - creating new consignment ${error}`);
-      // throw new DBException(500, error)
+      throw new DBException(500, error)
     }
   }
 

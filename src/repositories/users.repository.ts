@@ -39,7 +39,9 @@ export class UserRepository {
     return createUserData;
   }
 
-  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction | Processing | Batches | ConsignmentOutput[] | Environment> {
+  public async getRequestDetails(
+    requestId: string,
+  ): Promise<User | TeaHarvests | Transaction | Processing | Batches | ConsignmentOutput[] | Environment> {
     const findRequest: Transaction = await TransactionEntity.findOne({ where: { requestId: requestId } });
     if (!findRequest) throw new HttpException(409, `Request Id ${requestId} does not exists`);
     if (findRequest.status !== 'COMPLETED') {
@@ -85,57 +87,56 @@ export class UserRepository {
         harvest.createdAt = findHarvest.createdAt;
         return harvest;
 
+      case 'recordProcessing':
+        const findProcessing: Processing = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } });
+        let processing = new Processing();
+        processing.harvestId = findProcessing.harvestId;
+        processing.processType = findProcessing.processType;
+        processing.packagingPlantId = findProcessing.packagingPlantId;
+        processing.blockchainHash = findRequest.txHash;
+        return processing;
 
-        case 'recordProcessing':
-          const findProcessing: Processing = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } });
-          let processing = new Processing();
-          processing.harvestId = findProcessing.harvestId;
-          processing.processType = findProcessing.processType;
-          processing.packagingPlantId = findProcessing.packagingPlantId;
-          processing.blockchainHash = findRequest.txHash;
-          return processing;
+      case 'createBatch':
+        const findBatches = await PacketsEntity.find({ where: { batchId: findRequest.entityId } });
+        const packageIds = findBatches.map(item => item.packageId);
+        let batch = new Batches();
+        batch.batchId = findRequest.entityId;
+        batch.packetWeight = '50gms';
+        batch.packages = packageIds;
+        batch.blockchainHash = findRequest.txHash;
+        return batch;
 
-        case 'createBatch': 
-          const findBatches = await PacketsEntity.find({ where: { batchId: findRequest.entityId } });
-          const packageIds = findBatches.map(item => item.packageId)
-          let batch = new Batches();
-          batch.batchId = findRequest.entityId;
-          batch.packetWeight = '50gms';
-          batch.packages = packageIds;
-          batch.blockchainHash = findRequest.txHash;
-          return batch;
-          
-          case 'createConsignment':
-            console.log("createConsignment", findRequest)
-            const findConsignment = await ConsignmentEntity.find({ where: { shipmentId: findRequest.entityId } });
-            const consignments = findConsignment.map(c => {
-              let temp = new ConsignmentOutput()
-              temp.batchId = c.batchId;
-              temp.blockchainHash = c.blockchainHash
-              temp.carrier = c.carrier;
-              temp.createdAt = c.createdAt
-              temp.departureDate = c.departureDate
-              temp.expectedArrivalDate = c.expectedArrivalDate
-              temp.shipmentId = c.shipmentId
-              temp.status = c.status
-              temp.storagePlantId = c.storagePlantId
-              temp.updatedAt = c.updatedAt
-    
-              return temp
-            })
-            return consignments;
+      case 'createConsignment':
+        console.log('createConsignment', findRequest);
+        const findConsignment = await ConsignmentEntity.find({ where: { shipmentId: findRequest.entityId } });
+        const consignments: ConsignmentOutput[] = findConsignment.map(c => {
+          let temp = new ConsignmentOutput();
+          temp.batchId = c.batchId;
+          temp.blockchainHash = c.blockchainHash || null;
+          temp.carrier = c.carrier;
+          temp.createdAt = c.createdAt;
+          temp.departureDate = c.departureDate;
+          temp.expectedArrivalDate = c.expectedArrivalDate;
+          temp.shipmentId = c.shipmentId;
+          temp.status = c.status;
+          temp.storagePlantId = c.storagePlantId;
+          temp.updatedAt = c.updatedAt;
 
-            case 'updateConsignment':
-              const findEnvDetails = await EnvironmentEntity.findOne( { where: { shipmentId: findRequest.entityId }})
-              let envDetails = new Environment();
-              envDetails.shipmentId = findRequest.entityId;
-              envDetails.humidity = findEnvDetails.humidity;
-              envDetails.temperature = findEnvDetails.temperature;
-              envDetails.track = findEnvDetails.track;
-              envDetails.updatedAt = findEnvDetails.updatedAt;
-              envDetails.blockchainHash = findRequest.txHash;
-              return envDetails
-          
+          return temp;
+        });
+        return consignments;
+
+      case 'updateConsignment':
+        const findEnvDetails = await EnvironmentEntity.findOne({ where: { shipmentId: findRequest.entityId } });
+        let envDetails = new Environment();
+        envDetails.shipmentId = findRequest.entityId;
+        envDetails.humidity = findEnvDetails.humidity;
+        envDetails.temperature = findEnvDetails.temperature;
+        envDetails.track = findEnvDetails.track;
+        envDetails.updatedAt = findEnvDetails.updatedAt;
+        envDetails.blockchainHash = findRequest.txHash;
+        return envDetails;
+
       default:
         break;
     }

@@ -36,6 +36,7 @@ export class UserResolver extends UserRepository {
   })
   async getRequestStatus(@Arg('requestId') requestId: string): Promise<RequestStatusResultUnion> {
     const result = await this.getRequestDetails(requestId);
+
     if (result instanceof User) {
       return new RequestStatusResultUnion({ userDetails: result });
     } else if (result instanceof TeaHarvests) {
@@ -46,10 +47,13 @@ export class UserResolver extends UserRepository {
       return new RequestStatusResultUnion({ processingDetails: result });
     } else if (result instanceof Batches) {
       return new RequestStatusResultUnion({ batchDetails: result });
-    } 
-    else if (result instanceof Environment) {
+    } else if (result instanceof Environment) {
       return new RequestStatusResultUnion({ environmentDetails: result });
+    } else if (Array.isArray(result)) {
+      if(result[0] instanceof ConsignmentOutput)
+      return new RequestStatusResultUnion({ consignmentDetails: result });
     }
+
     // to-do add consignment calls
 
     // to-do add batch calls

@@ -9,7 +9,7 @@ export class ConsignmentResolver extends ConsignmentRepository {
   @Authorized([USER_ROLE.SHIPMENT_COMPANY])
   @Mutation(() => String, { description: 'Create a consignment of multiple batches' })
   async createConsignment(@Ctx('user') userData: any, @Arg('consignments', type => ConsignmentDto) consignments: ConsignmentDto) {
-    return `Create Processing request submitted successfully. Request Id: ${await this.consignmentCreate(consignments, userData)})`;
+    return `Create Processing request submitted successfully. Request Id: ${await this.consignmentCreate(consignments, userData)}`;
   }
 
   @Authorized([USER_ROLE.SHIPMENT_COMPANY])
