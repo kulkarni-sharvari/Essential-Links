@@ -5,6 +5,7 @@ import { Transaction } from './transaction.type';
 import { Processing } from './processing.type';
 import { Batches } from './batches.type';
 import { ConsignmentOutput } from './consignment.type';
+import { Environment } from './environment.type';
 
 @ObjectType()
 export class RequestStatusResultUnion {
@@ -25,6 +26,9 @@ export class RequestStatusResultUnion {
 
   @Field(() => Batches, { nullable: true })
   batchDetails?: Batches;
+
+  @Field(() => Environment, { nullable: true })
+  environmentDetails?: Environment;
 
   constructor(data?: Partial<RequestStatusResultUnion>) {
     if (data) {

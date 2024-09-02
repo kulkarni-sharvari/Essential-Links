@@ -14,6 +14,8 @@ import { ProcessingEntity } from '@/entities/processing.entity';
 import { PacketsEntity } from '@/entities/packets.entity';
 import { ConsignmentOutput } from '@/typedefs/consignment.type';
 import { ConsignmentEntity } from '@/entities/consignment.entity';
+import { EnvironmentEntity } from '@/entities/environment.entity';
+import { Environment } from '@/typedefs/environment.type';
 
 @EntityRepository(UserEntity)
 // A class that handles various user-related database operations
@@ -37,7 +39,7 @@ export class UserRepository {
     return createUserData;
   }
 
-  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction | Processing | Batches | ConsignmentOutput[]> {
+  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction | Processing | Batches | ConsignmentOutput[] | Environment> {
     const findRequest: Transaction = await TransactionEntity.findOne({ where: { requestId: requestId } });
     if (!findRequest) throw new HttpException(409, `Request Id ${requestId} does not exists`);
     if (findRequest.status !== 'COMPLETED') {
@@ -99,6 +101,7 @@ export class UserRepository {
           batch.packetWeight = '50gms';
           batch.packages = packageIds;
           return batch;
+          
           case 'createConsignment':
             console.log("createConsignment", findRequest)
             const findConsignment = await ConsignmentEntity.find({ where: { shipmentId: findRequest.entityId } });
@@ -118,6 +121,17 @@ export class UserRepository {
               return temp
             })
             return consignments;
+
+            case 'updateConsignment':
+              const findEnvDetails = await EnvironmentEntity.findOne( { where: { shipmentId: findRequest.entityId }})
+              let envDetails = new Environment();
+              envDetails.shipmentId = findRequest.entityId;
+              envDetails.humidity = findEnvDetails.humidity;
+              envDetails.temperature = findEnvDetails.temperature;
+              envDetails.track = findEnvDetails.track;
+              envDetails.updatedAt = findEnvDetails.updatedAt;
+              return envDetails
+          
       default:
         break;
     }
