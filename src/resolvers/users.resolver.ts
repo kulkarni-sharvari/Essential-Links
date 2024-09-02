@@ -6,6 +6,7 @@ import { Transaction } from '@/typedefs/transaction.type';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
 import { Processing } from '@/typedefs/processing.type';
 import { Batches } from '@/typedefs/batches.type';
+import { ConsignmentOutput } from '@/typedefs/consignment.type';
 
 @Resolver()
 
@@ -44,7 +45,13 @@ export class UserResolver extends UserRepository {
       return new RequestStatusResultUnion({ processingDetails: result });
     } else if (result instanceof Batches) {
       return new RequestStatusResultUnion({ batchDetails: result });
+    } 
+    else if (result instanceof ConsignmentOutput) {
+      return new RequestStatusResultUnion({ consignmentDetails: result });
     }
+    // to-do add consignment calls
+
+    // to-do add batch calls
 
     return new RequestStatusResultUnion(); // return an empty instance if no match
   }

@@ -12,6 +12,8 @@ import { Transaction } from '@/typedefs/transaction.type';
 import { TeaHarvestsEntity } from '@/entities/harvests.entity';
 import { ProcessingEntity } from '@/entities/processing.entity';
 import { PacketsEntity } from '@/entities/packets.entity';
+import { ConsignmentOutput } from '@/typedefs/consignment.type';
+import { ConsignmentEntity } from '@/entities/consignment.entity';
 
 @EntityRepository(UserEntity)
 // A class that handles various user-related database operations
@@ -35,7 +37,7 @@ export class UserRepository {
     return createUserData;
   }
 
-  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction | Processing | Batches> {
+  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction | Processing | Batches | ConsignmentOutput[]> {
     const findRequest: Transaction = await TransactionEntity.findOne({ where: { requestId: requestId } });
     if (!findRequest) throw new HttpException(409, `Request Id ${requestId} does not exists`);
     if (findRequest.status !== 'COMPLETED') {
@@ -97,8 +99,25 @@ export class UserRepository {
           batch.packetWeight = '50gms';
           batch.packages = packageIds;
           return batch;
-
-  
+          case 'createConsignment':
+            console.log("createConsignment", findRequest)
+            const findConsignment = await ConsignmentEntity.find({ where: { shipmentId: findRequest.entityId } });
+            const consignments = findConsignment.map(c => {
+              let temp = new ConsignmentOutput()
+              temp.batchId = c.batchId;
+              temp.blockchainHash = c.blockchainHash
+              temp.carrier = c.carrier;
+              temp.createdAt = c.createdAt
+              temp.departureDate = c.departureDate
+              temp.expectedArrivalDate = c.expectedArrivalDate
+              temp.shipmentId = c.shipmentId
+              temp.status = c.status
+              temp.storagePlantId = c.storagePlantId
+              temp.updatedAt = c.updatedAt
+    
+              return temp
+            })
+            return consignments;
       default:
         break;
     }

@@ -4,6 +4,7 @@ import { TeaHarvests } from './teaHarvests.type';
 import { Transaction } from './transaction.type';
 import { Processing } from './processing.type';
 import { Batches } from './batches.type';
+import { ConsignmentOutput } from './consignment.type';
 
 @ObjectType()
 export class RequestStatusResultUnion {
@@ -18,6 +19,9 @@ export class RequestStatusResultUnion {
 
   @Field(() => Processing, { nullable: true })
   processingDetails?: Processing;
+  
+  @Field(() => [ConsignmentOutput], { nullable: true })
+  consignmentDetails?: ConsignmentOutput[];
 
   @Field(() => Batches, { nullable: true })
   batchDetails?: Batches;

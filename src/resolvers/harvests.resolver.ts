@@ -15,7 +15,7 @@ export class TeaHarvestsResolver extends TeaHarvestsRepository {
   @Authorized([USER_ROLE.FARMER])
   @Mutation(() => String, { description: 'Creates Harvests' })
   async createHarvest(@Ctx('user') userData: any, @Arg('harvest') harvestInput: TeaHarvestsDto): Promise<string> {
-    return `Your Create Harvest request submitted successfully. Request Id: ${await this.harvestCreate(harvestInput, userData.id)})`;
+    return `Your Create Harvest request submitted successfully. Request Id: ${await this.harvestCreate(harvestInput, userData.id)}`;
   }
 
   /**

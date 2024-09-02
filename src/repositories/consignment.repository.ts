@@ -12,7 +12,7 @@ const publisher = new Publisher().getInstance();
 
 @EntityRepository(ConsignmentEntity)
 export class ConsignmentRepository {
-  //TODO:
+  
   async consignmentCreate(consignments: ConsignmentDto, userData: any): Promise<string> {
     const shipmentId = uniqid();
 
@@ -30,8 +30,14 @@ export class ConsignmentRepository {
     });
     try {
       // bulk insert into DB
-      await ConsignmentEntity.createQueryBuilder().insert().into(ConsignmentEntity).values(newConsignments).execute();
+      await ConsignmentEntity
+      .createQueryBuilder()
+      .insert()
+      .into(ConsignmentEntity)
+      .values(newConsignments)
+      .execute();
       logger.info('Created new consignment');
+      
       // query DB with said {shipmentId}
       await this.getAllConsignmentByID(shipmentId);
       const batchIds = consignments.batchId.map(batch => batch.toString());
