@@ -1,13 +1,17 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import {  IsEnum, IsNotEmpty, Validate } from 'class-validator';
 import { InputType, Field } from 'type-graphql';
 import { Consignment } from '@/typedefs/consignment.type';
 import { CARRIER, STATUS_TRACK } from '@/constants';
+import { IsAfterOrEqualConstraint } from '@/utils/etaDepatureDateValidator';
 
 // InputType(): Marks a class as an input type for GraphQL, meaning it can be used as input in GraphQL queries and mutations
 
 // Field(): Marks a class property as a GraphQL field, making it accessible in GraphQL queries and mutations
 
 // the class will have fields that partially match the `Consignment` type, though they are optional in the context of `Partial<Consignment>`
+
+// Custom validation constraint
+
 @InputType()
 export class ConsignmentDto implements Partial<Consignment> {
   @Field(() => [String])
@@ -30,6 +34,8 @@ export class ConsignmentDto implements Partial<Consignment> {
 
   @Field()
   @IsNotEmpty()
+  // custom validator
+  @Validate(IsAfterOrEqualConstraint, ['departureDate'])
   expectedArrivalDate: Date;
 }
 
