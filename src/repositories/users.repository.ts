@@ -69,6 +69,7 @@ export class UserRepository {
         user.location = findUser.location;
         user.role = findUser.role;
         user.walletAddress = findUser.walletAddress;
+        user.blockchainHash = findRequest.txHash;
         return user;
 
       case 'recordHarvest':
@@ -91,6 +92,7 @@ export class UserRepository {
           processing.harvestId = findProcessing.harvestId;
           processing.processType = findProcessing.processType;
           processing.packagingPlantId = findProcessing.packagingPlantId;
+          processing.blockchainHash = findRequest.txHash;
           return processing;
 
         case 'createBatch': 
@@ -100,6 +102,7 @@ export class UserRepository {
           batch.batchId = findRequest.entityId;
           batch.packetWeight = '50gms';
           batch.packages = packageIds;
+          batch.blockchainHash = findRequest.txHash;
           return batch;
           
           case 'createConsignment':
@@ -130,6 +133,7 @@ export class UserRepository {
               envDetails.temperature = findEnvDetails.temperature;
               envDetails.track = findEnvDetails.track;
               envDetails.updatedAt = findEnvDetails.updatedAt;
+              envDetails.blockchainHash = findRequest.txHash;
               return envDetails
           
       default:

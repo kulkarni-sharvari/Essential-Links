@@ -17,4 +17,7 @@ export class Environment {
 
     @Field()
     updatedAt: Date;
+
+    @Field({nullable: true})
+    blockchainHash?: string;
 }

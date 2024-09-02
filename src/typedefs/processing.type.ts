@@ -21,4 +21,8 @@ export class Processing {
   @Field({nullable: true})
   packetWeight?: string;
 
+  
+  @Field({nullable: true})
+  blockchainHash?: string;
+
 }
