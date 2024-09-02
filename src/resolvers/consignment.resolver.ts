@@ -2,8 +2,8 @@ import { USER_ROLE } from '@/constants';
 import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDetailsDto, UpdateConsignmentStatusDto } from '@/dtos/consignment.dto';
 import { ConsignmentRepository } from '@/repositories/consignment.repository';
 import { Consignment } from '@/typedefs/consignment.type';
-import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
-
+import { Arg, Authorized, Ctx, Mutation, Resolver, Query } from 'type-graphql';
+import { GraphQLJSONObject } from 'graphql-type-json';
 @Resolver()
 export class ConsignmentResolver extends ConsignmentRepository {
   @Authorized([USER_ROLE.SHIPMENT_COMPANY])
@@ -33,5 +33,15 @@ export class ConsignmentResolver extends ConsignmentRepository {
       consignment,
       userData,
     )}`;
+  }
+
+  /**
+ * @param batchId
+ * @returns all processing details for that harvestId
+ */
+  @Query(() => [GraphQLJSONObject], { description: 'Get processing details for batchId' })
+  async getPacketHistoryFromDB(@Arg('batchId') batchId: string): Promise<any> {
+    const packetHistory = await this.getPacketHistory(batchId)
+    return packetHistory;
   }
 }

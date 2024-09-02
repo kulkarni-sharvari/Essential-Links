@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { ApolloServerPluginLandingPageProductionDefault, ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { ApolloServer } from 'apollo-server-express';
 import compression from 'compression';
-import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -15,6 +14,9 @@ import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';
 import { Publisher } from './services/publisher.service';
+import { CSP_RULES } from './constants';
+import { sanitizeInput } from './middlewares/sanitizeInput.middleware';
+import { rateLimit } from 'express-rate-limit';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -26,7 +28,6 @@ export class App {
     this.app = express();
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
-
 
     // set up all middlewares
     this.initializeMiddlewares();
@@ -61,8 +62,7 @@ export class App {
   private async subscribe() {
     const pub = new Publisher().getInstance();
     await pub.subscribe();
-    console.log("Transaction Listener Started .......");
-    
+    console.log('Transaction Listener Started .......');
   }
 
   private async startEventListener() {
@@ -73,9 +73,21 @@ export class App {
   private initializeMiddlewares() {
     if (this.env === 'production') {
       this.app.use(hpp());
-      this.app.use(helmet());
     }
 
+    this.app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: CSP_RULES,
+        },
+        referrerPolicy: { policy: 'no-referrer' },
+        xContentTypeOptions: false,
+        xDownloadOptions: false,
+        xFrameOptions: { action: 'deny' },
+        xPoweredBy: false,
+      }),
+    );
+    this.app.use(helmet.hidePoweredBy());
     this.app.use(cors({ origin: ORIGIN, credentials: CREDENTIALS }));
     // Adds compression middleware to reduce the size of the response body
     this.app.use(compression());
@@ -83,8 +95,24 @@ export class App {
     this.app.use(express.json());
     // Adds middleware to parse URL-encoded data
     this.app.use(express.urlencoded({ extended: true }));
-    //TODO: (required?) Adds middleware to parse cookies
-    this.app.use(cookieParser());
+    // Rate limiter
+    this.app.use(
+      rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+        standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+        legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+      }),
+    );
+
+    // set permission-policy
+    this.app.use((req, res, next) => {
+      res.setHeader(
+        'Permissions-Policy',
+        'fullscreen=(self), microphone=(), camera=(), payment=()geolocation=(), interest-cohort=(), accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), compute-pressure=(), display-capture=(), document-domain=(), encrypted-media=(), gamepad=() gyroscope=(), hid=(), identity-credentials-get(), idle-detection=(), local-fonts=(), magnetometer=(), microphone=(), midi=(),  otp-credentials(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=() speaker-selection=(), storage-access=(), usb=(), web-share=(), window-management=(), xe-spatial-tracking=()',
+      );
+      next();
+    });
   }
 
   // set up the Apollo Server with the provided resolvers
@@ -92,6 +120,7 @@ export class App {
     const schema = await buildSchema({
       resolvers: resolvers,
       authChecker: AuthCheckerMiddleware,
+      globalMiddlewares: [sanitizeInput],
     });
 
     // Creates a new instance of Apollo Server with the built schema
@@ -121,7 +150,10 @@ export class App {
       formatError: error => {
         try {
           errorLogger(error);
-          return error;
+          return {
+            status: error.extensions.exception.status,
+            message: error.message,
+          };
         } catch (err) {
           return new Error(err);
         }

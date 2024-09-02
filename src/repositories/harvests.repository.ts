@@ -82,7 +82,11 @@ export class TeaHarvestsRepository {
    * @returns all the harvests done by a user
    */
   async readAllHarvestByFarmerId(user: User): Promise<TeaHarvests[]> {
-    const allHarvests = await TeaHarvestsEntity.find({ where: { userId: user.id } });
-    return allHarvests;
+    try {
+      const allHarvests = await TeaHarvestsEntity.find({ where: { userId: user.id } });
+      return allHarvests;
+    } catch (err) {
+      throw new DBException(500, err);
+    }
   }
 }

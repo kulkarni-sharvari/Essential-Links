@@ -1,6 +1,7 @@
 import { ConsignmentDto, UpdateConsignmentBlockchainDto, UpdateConsignmentEnvDetailsDto, UpdateConsignmentStatusDto } from '@/dtos/consignment.dto';
 import { ConsignmentEntity } from '@/entities/consignment.entity';
 import { EnvironmentEntity } from '@/entities/environment.entity';
+import { EventEntity } from '@/entities/event.entity';
 import { DBException } from '@/exceptions/DBException';
 import { HttpException } from '@/exceptions/HttpException';
 import { logger } from '@/utils/logger';
@@ -11,6 +12,7 @@ import { Publisher } from '@/services/publisher.service';
 const publisher = new Publisher().getInstance();
 
 @EntityRepository(ConsignmentEntity)
+@EntityRepository(EventEntity)
 export class ConsignmentRepository {
   
   async consignmentCreate(consignments: ConsignmentDto, userData: any): Promise<string> {
@@ -160,5 +162,41 @@ export class ConsignmentRepository {
   async getAllEnvByID(shipmentId: string) {
     logger.info(`Fetching all env for consignment: ${shipmentId}`);
     return await EnvironmentEntity.find({ where: { shipmentId } });
+  }
+
+  
+  async getPacketHistory(batchId: string) {
+    try {
+      const resultArray = []
+      const shipment = await ConsignmentEntity.findOne({ select: ['shipmentId'], where: { batchId: batchId } });
+      const shipmentId =  shipment.shipmentId
+      const allBatchRecords = await EventEntity.createQueryBuilder('ee')
+                                          .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
+                                          .where(`ee."eventDetails"->>'batchId' = :batchId`, { batchId })
+                                          .getMany();
+                        
+      resultArray.push(...allBatchRecords)
+
+      const shipmentRecords = await EventEntity.createQueryBuilder('ee')
+                                                .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
+                                                .where(`ee."eventDetails"->>'shipmentId' = :shipmentId`, { shipmentId })
+                                                .getMany();
+      resultArray.push(...shipmentRecords)                                        
+      const harvestId = (allBatchRecords.filter(batchrecord => batchrecord.eventName ===  'BatchCreated').map(record => record.eventDetails.harvestId))[0]
+
+      const allHarvestRecords = await EventEntity.createQueryBuilder('ee')
+                                                  .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
+                                                  .where(`ee."eventDetails"->>'harvestId' = :harvestId`, { harvestId })
+                                                  .getMany();
+      resultArray.push(...allHarvestRecords)
+      const uniqueArray = Array.from(
+        new Map(resultArray.map(item => [item.eventName, item])).values()
+      );
+
+      return (uniqueArray)
+    } catch(error) {
+      logger.error(`ERROR - fetching packet history for batchId ${batchId} ${error}`);
+      throw new DBException(500, error);
+    }
   }
 }

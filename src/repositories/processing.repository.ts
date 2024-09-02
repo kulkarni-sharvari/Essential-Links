@@ -1,3 +1,4 @@
+import { DB_EXCEPTION_CODES, HTTP_STATUS_CODE } from '@/constants';
 import { CreateBatchDto, CreateProcessingDto } from '@/dtos/processing.dto';
 import { PacketsEntity } from '@/entities/packets.entity';
 import { ProcessingEntity } from '@/entities/processing.entity';
@@ -5,6 +6,7 @@ import { DBException } from '@/exceptions/DBException';
 import { Processing } from '@/interfaces/processing.interface';
 import { Batches } from '@/typedefs/batches.type';
 import { Packets } from '@/typedefs/packets.type';
+import { containsEnumKey } from '@/utils/getErrorFromEnums';
 import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
@@ -34,8 +36,8 @@ export class ProcessingRepository {
       return await publisher.publish(tx);
     } catch (error) {
       logger.error('Error in processingCreate method:', error);
-      // throw new DBException(500, error.message);
-      throw new Error(error.message);
+      const x = containsEnumKey(DB_EXCEPTION_CODES,error.message)
+      throw new DBException(HTTP_STATUS_CODE.BAD_REQUEST, DB_EXCEPTION_CODES[x]);
     }
   }
 
