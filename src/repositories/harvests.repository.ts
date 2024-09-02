@@ -18,7 +18,7 @@ export class TeaHarvestsRepository {
    * @param harvestInput takes harvest input object to create record in db
    * @returns updated row in db
    */
-  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId:number): Promise<TeaHarvests> {
+  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId: number): Promise<TeaHarvests> {
     const queryRunner = getConnection().createQueryRunner();
     await queryRunner.startTransaction();
 
@@ -30,16 +30,7 @@ export class TeaHarvestsRepository {
         userId
       });
 
-      // await new TeaSupplyChain().recordHarvest(
-      //   harvestId,
-      //   createHarvestData.createdAt.toISOString(),
-      //   createHarvestData.quality,
-      //   createHarvestData.quantity.toString(),
-      //   createHarvestData.location,
-      //   userWallet.privateKey,
-      // );
-
-            await tsc.recordHarvest(
+      await tsc.recordHarvest(
         harvestId,
         createHarvestData.createdAt.toISOString(),
         createHarvestData.quality,
@@ -88,7 +79,11 @@ export class TeaHarvestsRepository {
    * @returns all the harvests done by a user
    */
   async readAllHarvestByFarmerId(user: User): Promise<TeaHarvests[]> {
-    const allHarvests = await TeaHarvestsEntity.find({ where: { userId: user.id } });
-    return allHarvests;
+    try {
+      const allHarvests = await TeaHarvestsEntity.find({ where: { userId: user.id } });
+      return allHarvests;
+    } catch (err) {
+      throw new DBException(500, err);
+    }
   }
 }

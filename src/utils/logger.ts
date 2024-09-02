@@ -68,5 +68,6 @@ export const errorLogger = error => {
   }
 
   logger.error(message);
-  throw new HttpException(400, message);
+  return {status: error.status, message: error.message}
+  // throw new HttpException(400, message);
 };

@@ -13,6 +13,10 @@ import { CreateWallet } from '@/services/createWallet';
 import { CryptoUtil } from '@/utils/crypto';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
+import { logger } from '@/utils/logger';
+import { containsEnumKey } from '@/utils/getErrorFromEnums';
+import { DB_EXCEPTION_CODES, HTTP_STATUS_CODE } from '@/constants';
+import { DBException } from '@/exceptions/DBException';
 
 const tsc = new TeaSupplyChain().getInstance();
 
@@ -22,11 +26,6 @@ const createToken = (user: User): TokenData => {
   const expiresIn: number = 60 * 60; // Token expiry time
 
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
-};
-
-// Method to create a cookie string for storing the JWT
-const createCookie = (tokenData: TokenData): string => {
-  return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
 };
 
 @EntityRepository(UserEntity)
@@ -79,13 +78,14 @@ export class AuthRepository {
       // Register the user on the blockchain
       //const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
       const res = await tsc.registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      console.log('tx Receipt', res);
 
       await queryRunner.commitTransaction();
       return createUserData;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new HttpException(500, `User registration failed: ${error.message}`);
+      logger.error('Error in processingCreate method:', error);
+      const x = containsEnumKey(DB_EXCEPTION_CODES,error.message)
+      throw new DBException(HTTP_STATUS_CODE.BAD_REQUEST, DB_EXCEPTION_CODES[x]);
     } finally {
       await queryRunner.release();
     }
@@ -94,19 +94,18 @@ export class AuthRepository {
   /**
    * Handles user login functionality.
    * @param userData - User login details.
-   * @returns Object containing cookie, user data, and token data.
+   * @returns Object containing user data, and token data.
    */
-  public async userLogIn(userData: UserLoginDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {
+  public async userLogIn(userData: UserLoginDto): Promise<{ findUser: User; tokenData: TokenData }> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
 
     const isPasswordMatching: boolean = await compare(userData.password, findUser.password);
-    if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
+    if (!isPasswordMatching) throw new HttpException(409, 'Invalid credentials. Eithor email or password is incorrect');
 
     const tokenData = createToken(findUser);
-    const cookie = createCookie(tokenData);
 
-    return { cookie, findUser, tokenData };
+    return { findUser, tokenData };
   }
 
   /**
