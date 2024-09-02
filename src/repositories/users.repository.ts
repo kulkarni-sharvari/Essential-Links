@@ -83,21 +83,19 @@ export class UserRepository {
 
         case 'recordProcessing':
           const findProcessing: Processing = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } });
-          console.log('processing ====> ', findProcessing);
           let processing = new Processing();
           processing.harvestId = findProcessing.harvestId;
           processing.processType = findProcessing.processType;
           processing.packagingPlantId = findProcessing.packagingPlantId;
           return processing;
 
-        case 'createBatch':
-          const getProcessingDetails = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } })
-          const batchId = getProcessingDetails.batchId;
-          const findBatches = await PacketsEntity.find({ where: { batchId: batchId } });
+        case 'createBatch': 
+          const findBatches = await PacketsEntity.find({ where: { batchId: findRequest.entityId } });
+          const packageIds = findBatches.map(item => item.packageId)
           let batch = new Batches();
-          batch.batchId = batchId;
+          batch.batchId = findRequest.entityId;
           batch.packetWeight = '50gms';
-          batch.packages = [];
+          batch.packages = packageIds;
           return batch;
 
   

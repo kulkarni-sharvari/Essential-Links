@@ -3,6 +3,7 @@ import { User } from './users.type';
 import { TeaHarvests } from './teaHarvests.type';
 import { Transaction } from './transaction.type';
 import { Processing } from './processing.type';
+import { Batches } from './batches.type';
 
 @ObjectType()
 export class RequestStatusResultUnion {
@@ -17,6 +18,9 @@ export class RequestStatusResultUnion {
 
   @Field(() => Processing, { nullable: true })
   processingDetails?: Processing;
+
+  @Field(() => Batches, { nullable: true })
+  batchDetails?: Batches;
 
   constructor(data?: Partial<RequestStatusResultUnion>) {
     if (data) {
