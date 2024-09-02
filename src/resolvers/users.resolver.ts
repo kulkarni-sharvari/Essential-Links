@@ -7,6 +7,7 @@ import { TeaHarvests } from '@/typedefs/teaHarvests.type';
 import { Processing } from '@/typedefs/processing.type';
 import { Batches } from '@/typedefs/batches.type';
 import { ConsignmentOutput } from '@/typedefs/consignment.type';
+import { Environment } from '@/typedefs/environment.type';
 
 @Resolver()
 
@@ -46,8 +47,8 @@ export class UserResolver extends UserRepository {
     } else if (result instanceof Batches) {
       return new RequestStatusResultUnion({ batchDetails: result });
     } 
-    else if (result instanceof ConsignmentOutput) {
-      return new RequestStatusResultUnion({ consignmentDetails: result });
+    else if (result instanceof Environment) {
+      return new RequestStatusResultUnion({ environmentDetails: result });
     }
     // to-do add consignment calls
 
