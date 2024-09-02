@@ -1,12 +1,33 @@
 import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+interface eventDetails {
+  batchId?: string;
+  shipmentId?: string;
+  carrier?: string;
+  departureDate?: string;
+  eta?: string;
+  temperature?: string;
+  humidity?: string;
+  status?: string;
+  date?: string;
+  location?: string;
+  farmerId?: string;
+  accountAddress?: string;
+  role?: string;
+  harvestId?: string;
+  quantity?: string;
+  quality?:string;
+  timestamp?: string;
+}
+
 @Entity()
-export class EventEntity extends BaseEntity {
+export class EventEntity extends BaseEntity  {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'json' })
-  eventDetails: object;
+  //eventDetails: object;
+  eventDetails: eventDetails;
 
   @Column({ type: 'varchar', length: 255 })
   eventName: string;

@@ -7,7 +7,7 @@ import { USER_ROLE } from '@/constants';
 import { Batches } from '@/typedefs/batches.type';
 import { GetWalletInfo } from '@/utils/getWalletInfo';
 import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
-import { GraphQLJSONObject } from 'graphql-type-json';
+
 const tsc = new TeaSupplyChain().getInstance();
 
 @Resolver()

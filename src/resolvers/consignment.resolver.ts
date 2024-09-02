@@ -5,7 +5,8 @@ import { ConsignmentRepository } from '@/repositories/consignment.repository';
 import { Consignment, ConsignmentOutput } from '@/typedefs/consignment.type';
 import { Environment } from '@/typedefs/environment.type';
 import { GetWalletInfo } from '@/utils/getWalletInfo';
-import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Mutation, Resolver, Query } from 'type-graphql';
+import { GraphQLJSONObject } from 'graphql-type-json';
 
 @Resolver()
 export class ConsignmentResolver extends ConsignmentRepository {
@@ -38,4 +39,14 @@ export class ConsignmentResolver extends ConsignmentRepository {
     const updatedConsignment = await this.consignmentEnvironmentUpdate(consignment, userWallet);
     return updatedConsignment;
   }
+
+    /**
+   * @param batchId
+   * @returns all processing details for that harvestId
+   */
+      @Query(() => [GraphQLJSONObject], { description: 'Get processing details for batchId' })
+      async getPacketHistoryFromDB(@Arg('batchId') batchId: string): Promise<any> {
+        const packetHistory = await this.getPacketHistory(batchId)
+        return packetHistory;
+      }
 }
