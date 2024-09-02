@@ -100,7 +100,7 @@ class TeaSupplyChain {
     }
   }
 
-  public async createBatch(harvestId: string, batchId: string, quantity: string, packetIds: string[], callerAccountKey: string): Promise<any> {
+  public async createBatch(batchId: string, harvestId: string, quantity: string, packetIds: string[], callerAccountKey: string): Promise<any> {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [harvestId, batchId, quantity, packetIds];

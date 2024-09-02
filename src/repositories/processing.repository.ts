@@ -92,7 +92,7 @@ export class ProcessingRepository {
         packages: packages.map(({ packageId }) => packageId as string),
       };
 
-      const payload = [batchInput.harvestId, batchId, batchInput.noOfPackets.toString(), batch.packages];
+      const payload = [batchId, batchInput.harvestId, batchInput.noOfPackets.toString(), batch.packages];
       const tx = {
         methodName: 'createBatch',
         payload: payload,

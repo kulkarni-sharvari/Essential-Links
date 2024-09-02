@@ -183,7 +183,7 @@ class TransactionHandler {
       const [harvestId, batchId, quantity, packetIds] = tx.payload;
       const privateKey = await this.getUserWalletDetails(userId);
       entityId = batchId;
-      txHash = await tsc.createBatch(harvestId, batchId, quantity, packetIds, privateKey);
+      txHash = await tsc.createBatch(batchId, harvestId, quantity, packetIds, privateKey);
 
       await queryRunner.startTransaction();
       await queryRunner.manager.update(
