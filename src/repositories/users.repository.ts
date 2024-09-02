@@ -6,8 +6,12 @@ import { HttpException } from '@exceptions/HttpException';
 import { User } from '@typedefs/users.type';
 import { TransactionEntity } from '@/entities/transaction.entity';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
+import { Processing } from '@/typedefs/processing.type';
+import { Batches } from '@/typedefs/batches.type';
 import { Transaction } from '@/typedefs/transaction.type';
 import { TeaHarvestsEntity } from '@/entities/harvests.entity';
+import { ProcessingEntity } from '@/entities/processing.entity';
+import { PacketsEntity } from '@/entities/packets.entity';
 
 @EntityRepository(UserEntity)
 // A class that handles various user-related database operations
@@ -31,7 +35,7 @@ export class UserRepository {
     return createUserData;
   }
 
-  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction> {
+  public async getRequestDetails(requestId: string): Promise<User | TeaHarvests | Transaction | Processing | Batches> {
     const findRequest: Transaction = await TransactionEntity.findOne({ where: { requestId: requestId } });
     if (!findRequest) throw new HttpException(409, `Request Id ${requestId} does not exists`);
     if (findRequest.status !== 'COMPLETED') {
@@ -76,6 +80,27 @@ export class UserRepository {
         harvest.createdAt = findHarvest.createdAt;
         return harvest;
 
+
+        case 'recordProcessing':
+          const findProcessing: Processing = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } });
+          console.log('processing ====> ', findProcessing);
+          let processing = new Processing();
+          processing.harvestId = findProcessing.harvestId;
+          processing.processType = findProcessing.processType;
+          processing.packagingPlantId = findProcessing.packagingPlantId;
+          return processing;
+
+        case 'createBatch':
+          const getProcessingDetails = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } })
+          const batchId = getProcessingDetails.batchId;
+          const findBatches = await PacketsEntity.find({ where: { batchId: batchId } });
+          let batch = new Batches();
+          batch.batchId = batchId;
+          batch.packetWeight = '50gms';
+          batch.packages = [];
+          return batch;
+
+  
       default:
         break;
     }

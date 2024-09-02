@@ -4,6 +4,7 @@ import { User } from '@typedefs/users.type';
 import { RequestStatusResultUnion } from '@/typedefs/requestStatus.type';
 import { Transaction } from '@/typedefs/transaction.type';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
+import { Processing } from '@/typedefs/processing.type';
 
 @Resolver()
 
@@ -38,6 +39,8 @@ export class UserResolver extends UserRepository {
       return new RequestStatusResultUnion({ harvestDetails: result });
     } else if (result instanceof Transaction) {
       return new RequestStatusResultUnion({ transactionDetails: result });
+    } else if (result instanceof Processing) {
+      return new RequestStatusResultUnion({ processingDetails: result });
     }
 
     return new RequestStatusResultUnion(); // return an empty instance if no match
