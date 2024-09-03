@@ -16,4 +16,7 @@ export class User {
 
   @Field()
   walletAddress: string;
+
+  @Field({nullable: true})
+  blockchainHash?: string;
 }

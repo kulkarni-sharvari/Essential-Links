@@ -3,13 +3,12 @@ import { TeaHarvestsEntity } from '@/entities/harvests.entity';
 import { DBException } from '@/exceptions/DBException';
 import { User } from '@/interfaces/users.interface';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
 
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
-
-const tsc = new TeaSupplyChain().getInstance();
+import { Publisher } from '@/services/publisher.service';
+const publisher = new Publisher().getInstance();
 
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
@@ -18,7 +17,7 @@ export class TeaHarvestsRepository {
    * @param harvestInput takes harvest input object to create record in db
    * @returns updated row in db
    */
-  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any, userId: number): Promise<TeaHarvests> {
+  async harvestCreate(harvestInput: TeaHarvestsDto, userId: number): Promise<string> {
     const queryRunner = getConnection().createQueryRunner();
     await queryRunner.startTransaction();
 
@@ -27,20 +26,24 @@ export class TeaHarvestsRepository {
       const createHarvestData: TeaHarvestsEntity = await queryRunner.manager.save(TeaHarvestsEntity, {
         ...harvestInput,
         harvestId,
-        userId
+        userId,
       });
-
-      await tsc.recordHarvest(
+      const payload = [
         harvestId,
         createHarvestData.createdAt.toISOString(),
         createHarvestData.quality,
         createHarvestData.quantity.toString(),
         createHarvestData.location,
-        userWallet.privateKey,
-      );
-
+      ];
+      const tx = {
+        methodName: 'recordHarvest',
+        payload: payload,
+        userId: userId,
+        entityId: harvestId
+      };
+      
       await queryRunner.commitTransaction();
-      return createHarvestData;
+      return await publisher.publish(tx);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(`Error creating harvest: ${error.message}`, { harvestInput, harvestId });

@@ -50,12 +50,11 @@ class TeaSupplyChain {
     }
   }
 
-  public async registerUser(accountAddress: string, userId: string, role: string): Promise<any> {
+  public async registerUser(accountAddress: string, userId: number, role: string): Promise<any> {
     try {
       const contractInstance = this.getContractInstance(ADMIN_PK);
       const userRole = USER_ROLES[role];
-      const payload = [accountAddress, userId, userRole];
-
+      const payload = [accountAddress, userId.toString(), userRole];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'registerUser', payload, this.currentUserAddress);
       this.clearUserAccount();
 
@@ -101,7 +100,7 @@ class TeaSupplyChain {
     }
   }
 
-  public async createBatch(harvestId: string, batchId: string, quantity: string, packetIds: string[], callerAccountKey: string): Promise<any> {
+  public async createBatch(batchId: string, harvestId: string, quantity: string, packetIds: string[], callerAccountKey: string): Promise<any> {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [harvestId, batchId, quantity, packetIds];
@@ -163,7 +162,7 @@ class TeaSupplyChain {
     try {
       const payload = [batchId];
       const contractInstance = this.getContractInstance(ADMIN_PK);
-      const res:any = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistory', payload);
+      const res: any = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistory', payload);
       this.clearUserAccount();
       const packetHistory = {
         harvestDetails: {

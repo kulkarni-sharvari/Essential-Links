@@ -44,7 +44,7 @@ interface IUser {
    * @param timestamp The block timestamp when the user was registered.
    */
   event UserRegistered(
-    address indexed accountAddress, // Indexing accountAddress for efficient filtering
+    address accountAddress, // Indexing accountAddress for efficient filtering
     string userId,
     ROLE role,
     uint256 timestamp

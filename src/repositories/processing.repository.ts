@@ -4,15 +4,14 @@ import { PacketsEntity } from '@/entities/packets.entity';
 import { ProcessingEntity } from '@/entities/processing.entity';
 import { DBException } from '@/exceptions/DBException';
 import { Processing } from '@/interfaces/processing.interface';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { Batches } from '@/typedefs/batches.type';
 import { Packets } from '@/typedefs/packets.type';
 import { containsEnumKey } from '@/utils/getErrorFromEnums';
 import { logger } from '@/utils/logger';
 import { EntityRepository } from 'typeorm';
 import uniqid from 'uniqid';
-
-const tsc = new TeaSupplyChain().getInstance();
+import { Publisher } from '@/services/publisher.service';
+const publisher = new Publisher().getInstance();
 
 @EntityRepository(ProcessingEntity)
 export class ProcessingRepository {
@@ -22,16 +21,19 @@ export class ProcessingRepository {
    * @param userWallet - The wallet of the user making the request.
    * @returns The created processing record.
    */
-  public async processingCreate(processingInput: CreateProcessingDto, userWallet: any, userId: number): Promise<Processing> {
+  public async processingCreate(processingInput: CreateProcessingDto, userId: number): Promise<any> {
     try {
-      // Interact with the blockchain to record the processing
-      // const res = await new TeaSupplyChain().recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
-      const res = await tsc.recordProcessing(processingInput.harvestId, processingInput.processType, userWallet.privateKey);
-      logger.info('Processing recorded on blockchain:', res);
+      const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput, packagingPlantId: userId }).save();
 
-      // Save the processing data in the database      
-      const createProcessingData: ProcessingEntity = await ProcessingEntity.create({ ...processingInput, packagingPlantId:userId }).save();
-      return createProcessingData;
+      // Save the processing data in the database
+      const payload = [processingInput.harvestId, processingInput.processType];
+      const tx = {
+        methodName: 'recordProcessing',
+        payload: payload,
+        userId: userId,
+        entityId: processingInput.harvestId,
+      };
+      return await publisher.publish(tx);
     } catch (error) {
       logger.error('Error in processingCreate method:', error);
       const x = containsEnumKey(DB_EXCEPTION_CODES,error.message)
@@ -60,7 +62,7 @@ export class ProcessingRepository {
    * @param userWallet - The wallet of the user making the request.
    * @returns The created batch information.
    */
-  public async batchCreate(batchInput: CreateBatchDto, userWallet: any): Promise<Batches> {
+  public async batchCreate(batchInput: CreateBatchDto, userId: number): Promise<Batches> {
     batchInput['packetWeight'] = '50g';
 
     logger.info('Creating batchId');
@@ -91,16 +93,16 @@ export class ProcessingRepository {
         packetWeight: batchInput.packetWeight,
         packages: packages.map(({ packageId }) => packageId as string),
       };
-      const result = await tsc.createBatch(
-        batchId,
-        batchInput.harvestId,
-        batchInput.noOfPackets.toString(),
-        batch.packages,
-        userWallet.privateKey,
-      );
-      logger.info('Batch created on blockchain:', result);
 
-      return batch;
+      const payload = [batchId, batchInput.harvestId, batchInput.noOfPackets.toString(), batch.packages];
+      const tx = {
+        methodName: 'createBatch',
+        payload: payload,
+        userId: userId,
+        entityId: batchId,
+      };
+      return await publisher.publish(tx);
+
     } catch (error) {
       logger.error('Error in batchCreate method:', error);
       throw new DBException(500, error.message);

@@ -3,12 +3,32 @@ import { Field, ObjectType } from 'type-graphql';
 @ObjectType()
 export class Transaction {
   @Field()
-  messageId: string;
+  requestId?: string;
 
   @Field()
-  userId: number;
+  methodName?: string;
 
   @Field()
-  status: string;
+  payload?: string;
 
+  @Field()
+  userId?: number;
+
+  @Field()
+  entityId?: string;
+
+  @Field()
+  status?: string;
+
+  @Field({ nullable: true })
+  txHash?: string;
+
+  @Field({ nullable: true })
+  errorMessage?: string;
+
+  @Field()
+  createdAt?: Date;
+
+  @Field()
+  updatedAt?: Date;
 }

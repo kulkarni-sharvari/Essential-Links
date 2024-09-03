@@ -129,4 +129,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+#pub-sub details
+src/config/pub-sub.json
 

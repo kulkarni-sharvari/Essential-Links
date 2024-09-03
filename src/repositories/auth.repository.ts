@@ -11,14 +11,14 @@ import { User } from '@interfaces/users.interface';
 import { JWTToken } from '@/typedefs/jwtuser.type';
 import { CreateWallet } from '@/services/createWallet';
 import { CryptoUtil } from '@/utils/crypto';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
 import { getConnection } from 'typeorm';
-import { logger } from '@/utils/logger';
+import { Publisher } from '@/services/publisher.service';
 import { containsEnumKey } from '@/utils/getErrorFromEnums';
 import { DB_EXCEPTION_CODES, HTTP_STATUS_CODE } from '@/constants';
 import { DBException } from '@/exceptions/DBException';
+import { logger } from '@/utils/logger';
 
-const tsc = new TeaSupplyChain().getInstance();
+const publisher = new Publisher().getInstance();
 
 // Method to create a JWT for a user
 const createToken = (user: User): TokenData => {
@@ -52,12 +52,12 @@ export class AuthRepository {
    * @returns The created user data.
    */
 
-  public async userSignUp(userData: CreateUserDto): Promise<User> {
+  public async userSignUp(userData: CreateUserDto): Promise<String> {
     const queryRunner = getConnection().createQueryRunner();
-    await queryRunner.startTransaction();
 
     try {
       // Create user data
+      await queryRunner.startTransaction();
       const hashedPassword = await hash(userData.password, 10);
       const walletObj = new CreateWallet().createUserWallet();
       const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
@@ -75,12 +75,15 @@ export class AuthRepository {
         userId: createUserData.id,
       });
 
-      // Register the user on the blockchain
-      //const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      const res = await tsc.registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-
+      const payload = [createUserData.walletAddress, createUserData.id, userData.role];
+      const tx = {
+        methodName: 'registerUser',
+        payload: payload,
+        userId: createUserData.id,
+        entityId: createUserData.id
+      };
       await queryRunner.commitTransaction();
-      return createUserData;
+      return await publisher.publish(tx);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       logger.error('Error in processingCreate method:', error);

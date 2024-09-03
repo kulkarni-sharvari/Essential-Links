@@ -1,31 +1,22 @@
-// polyfill to add ability to use metadata in TS. i,e Decorator
 import 'reflect-metadata';
-// generate a landing page for GraphQL queries and mutations
 import { ApolloServerPluginLandingPageProductionDefault, ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
-//create a GraphQL server
 import { ApolloServer } from 'apollo-server-express';
-//compresses response bodies to reduce their size and improve performance
 import compression from 'compression';
-// middleware, which allows you to enable Cross-Origin Resource Sharing
 import cors from 'cors';
 import express from 'express';
-// middleware that helps secure your Express apps
 import helmet from 'helmet';
-// middleware, which helps prevent HTTP Parameter Pollution attacks by sanitizing query parameters
 import hpp from 'hpp';
-// used to build a GraphQL schema based on TypeScript classes and decorators
 import { buildSchema } from 'type-graphql';
 import { NODE_ENV, PORT, ORIGIN, CREDENTIALS } from '@config';
 import { dbConnection } from '@database';
-//  custom authentication middleware
 import { AuthMiddleware, AuthCheckerMiddleware } from '@middlewares/auth.middleware';
-// custom error-handling middleware
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { GetEvents } from './services/blockchain/getEvents';
 import { logger, errorLogger } from '@utils/logger';
+import { Publisher } from './services/publisher.service';
 import { CSP_RULES } from './constants';
-import rateLimit from 'express-rate-limit';
 import { sanitizeInput } from './middlewares/sanitizeInput.middleware';
+import { rateLimit } from 'express-rate-limit';
 
 export class App {
   // public property `app` of type `express.Application, which will hold the Express instance
@@ -38,15 +29,15 @@ export class App {
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
 
-    this.connectToDatabase();
-    this.startEventListener();
-
     // set up all middlewares
     this.initializeMiddlewares();
     // initialize the Apollo Server with the provided resolvers
     this.initApolloServer(resolvers);
     // set up error handling
     this.initializeErrorHandling();
+    this.connectToDatabase();
+    this.startEventListener();
+    this.subscribe();
   }
 
   public async listen() {
@@ -68,31 +59,35 @@ export class App {
     logger.info(`Database Connection status: ${await dbConnection()}`);
   }
 
-  private async startEventListener() {
-    await new GetEvents().startEventListener();
-    console.log("event listener started ")
+  private async subscribe() {
+    const pub = new Publisher().getInstance();
+    await pub.subscribe();
+    console.log('Transaction Listener Started .......');
   }
 
-
+  private async startEventListener() {
+    await new GetEvents().startEventListener();
+    console.log('event listener started ');
+  }
 
   private initializeMiddlewares() {
-
     if (this.env === 'production') {
       this.app.use(hpp());
     }
 
-    this.app.use(helmet({
-      contentSecurityPolicy: {
-        directives: CSP_RULES,
-
-      },
-      referrerPolicy: { policy: "no-referrer" },
-      xContentTypeOptions: false,
-      xDownloadOptions: false,
-      xFrameOptions: { action: "deny" },
-      xPoweredBy: false
-    }));
-    this.app.use(helmet.hidePoweredBy())
+    this.app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: CSP_RULES,
+        },
+        referrerPolicy: { policy: 'no-referrer' },
+        xContentTypeOptions: false,
+        xDownloadOptions: false,
+        xFrameOptions: { action: 'deny' },
+        xPoweredBy: false,
+      }),
+    );
+    this.app.use(helmet.hidePoweredBy());
     this.app.use(cors({ origin: ORIGIN, credentials: CREDENTIALS }));
     // Adds compression middleware to reduce the size of the response body
     this.app.use(compression());
@@ -101,22 +96,23 @@ export class App {
     // Adds middleware to parse URL-encoded data
     this.app.use(express.urlencoded({ extended: true }));
     // Rate limiter
-    this.app.use(rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-      standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-      legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-    }))
+    // this.app.use(
+    //   rateLimit({
+    //     windowMs: 15 * 60 * 1000, // 15 minutes
+    //     limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+    //     standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+    //     legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    //   }),
+    // );
 
     // set permission-policy
     this.app.use((req, res, next) => {
       res.setHeader(
-        "Permissions-Policy",
-        "fullscreen=(self), microphone=(), camera=(), payment=()geolocation=(), interest-cohort=(), accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), compute-pressure=(), display-capture=(), document-domain=(), encrypted-media=(), gamepad=() gyroscope=(), hid=(), identity-credentials-get(), idle-detection=(), local-fonts=(), magnetometer=(), microphone=(), midi=(),  otp-credentials(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=() speaker-selection=(), storage-access=(), usb=(), web-share=(), window-management=(), xe-spatial-tracking=()"
-
+        'Permissions-Policy',
+        'fullscreen=(self), microphone=(), camera=(), payment=()geolocation=(), interest-cohort=(), accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), compute-pressure=(), display-capture=(), document-domain=(), encrypted-media=(), gamepad=() gyroscope=(), hid=(), identity-credentials-get(), idle-detection=(), local-fonts=(), magnetometer=(), microphone=(), midi=(),  otp-credentials(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=() speaker-selection=(), storage-access=(), usb=(), web-share=(), window-management=(), xe-spatial-tracking=()',
       );
       next();
-    })
+    });
   }
 
   // set up the Apollo Server with the provided resolvers
@@ -124,7 +120,7 @@ export class App {
     const schema = await buildSchema({
       resolvers: resolvers,
       authChecker: AuthCheckerMiddleware,
-      globalMiddlewares:[sanitizeInput]
+      globalMiddlewares: [sanitizeInput],
     });
 
     // Creates a new instance of Apollo Server with the built schema
@@ -156,7 +152,7 @@ export class App {
           errorLogger(error);
           return {
             status: error.extensions.exception.status,
-            message: error.message
+            message: error.message,
           };
         } catch (err) {
           return new Error(err);
