@@ -7,7 +7,7 @@ module.exports = {
   // defaultNetwork: "hardhat",
   networks: {
     besuVM: {
-      url: 'http://localhost:8545',
+      url: 'http://13.200.98.198:9000',
       // chainId: 1337,
       accounts: ["0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"],
       // gas: 12000000,

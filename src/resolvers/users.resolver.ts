@@ -1,6 +1,13 @@
 import { Arg, Query, Resolver } from 'type-graphql';
 import { UserRepository } from '@repositories/users.repository';
 import { User } from '@typedefs/users.type';
+import { RequestStatusResultUnion } from '@/typedefs/requestStatus.type';
+import { Transaction } from '@/typedefs/transaction.type';
+import { TeaHarvests } from '@/typedefs/teaHarvests.type';
+import { Processing } from '@/typedefs/processing.type';
+import { Batches } from '@/typedefs/batches.type';
+import { ConsignmentOutput } from '@/typedefs/consignment.type';
+import { Environment } from '@/typedefs/environment.type';
 
 @Resolver()
 
@@ -22,5 +29,35 @@ export class UserResolver extends UserRepository {
   async getUserById(@Arg('userId') userId: number): Promise<User> {
     const user: User = await this.userFindById(userId);
     return user;
+  }
+
+  @Query(() => RequestStatusResultUnion, {
+    description: 'Get Request Details by Id',
+  })
+  async getRequestStatus(@Arg('requestId') requestId: string): Promise<RequestStatusResultUnion> {
+    const result = await this.getRequestDetails(requestId);
+
+    if (result instanceof User) {
+      return new RequestStatusResultUnion({ userDetails: result });
+    } else if (result instanceof TeaHarvests) {
+      return new RequestStatusResultUnion({ harvestDetails: result });
+    } else if (result instanceof Transaction) {
+      return new RequestStatusResultUnion({ transactionDetails: result });
+    } else if (result instanceof Processing) {
+      return new RequestStatusResultUnion({ processingDetails: result });
+    } else if (result instanceof Batches) {
+      return new RequestStatusResultUnion({ batchDetails: result });
+    } else if (result instanceof Environment) {
+      return new RequestStatusResultUnion({ environmentDetails: result });
+    } else if (Array.isArray(result)) {
+      if(result[0] instanceof ConsignmentOutput)
+      return new RequestStatusResultUnion({ consignmentDetails: result });
+    }
+
+    // to-do add consignment calls
+
+    // to-do add batch calls
+
+    return new RequestStatusResultUnion(); // return an empty instance if no match
   }
 }

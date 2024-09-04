@@ -12,4 +12,6 @@ export class Batches {
   @Field(() => [String])
   packages: string[];
 
+  @Field({nullable: true})
+  blockchainHash?: string;
 }

@@ -12,10 +12,6 @@ export class TeaHarvestsDto implements Partial<TeaHarvests> {
 
   @Field()
   @IsNotEmpty()
-  userId: number;
-
-  @Field()
-  @IsNotEmpty()
   quantity: number;
 
   @Field()

@@ -1,8 +1,7 @@
 export interface Environment {
-    batchId: string,
     track: string,
-    temperature: number,
-    humidity: number,
+    temperature: string,
+    humidity: string,
     updatedAt: Date,
     shipmentId: string
 

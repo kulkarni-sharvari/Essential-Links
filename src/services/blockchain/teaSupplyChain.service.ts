@@ -4,8 +4,9 @@ import Web3 from 'web3';
 import { BESU_URL, SUPPLYCHAIN_ADDRESS, ADMIN_PK } from '@config';
 import tscContractDetails from '../../../blockchain/artifacts/contracts/TeaSupplyChain.sol/SupplyChain.json';
 import { PROCESSING_STATUS, STATUS_TRACKING, USER_ROLES } from '@/constants/constants';
+import { PacketHistory } from '@/typedefs/packetHistory.type';
 
-export class TeaSupplyChain {
+class TeaSupplyChain {
   private web3: Web3;
   private contractInstance: any;
   private currentUserAddress: string | null = null;
@@ -49,12 +50,11 @@ export class TeaSupplyChain {
     }
   }
 
-  public async registerUser(accountAddress: string, userId: string, role: string): Promise<any> {
+  public async registerUser(accountAddress: string, userId: number, role: string): Promise<any> {
     try {
       const contractInstance = this.getContractInstance(ADMIN_PK);
       const userRole = USER_ROLES[role];
-      const payload = [accountAddress, userId, userRole];
-
+      const payload = [accountAddress, userId.toString(), userRole];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'registerUser', payload, this.currentUserAddress);
       this.clearUserAccount();
 
@@ -76,7 +76,6 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [harvestId, harvestDate, quality, quantity, location];
-
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordHarvest', payload, this.currentUserAddress);
       this.clearUserAccount();
 
@@ -91,11 +90,9 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const status = PROCESSING_STATUS[processingStatus];
-      const payload = [harvestId, status];
-
+      const payload = [harvestId.toString(), status];
       const res = await Utility.invokeContractPostMethod(contractInstance, 'recordProcessing', payload, this.currentUserAddress);
       this.clearUserAccount();
-
       return res;
     } catch (error) {
       logger.error(`Error in recordProcessing: ${error.message}`);
@@ -103,7 +100,7 @@ export class TeaSupplyChain {
     }
   }
 
-  public async createBatch(harvestId: string, batchId: string, quantity: string, packetIds: string[], callerAccountKey: string): Promise<any> {
+  public async createBatch(batchId: string, harvestId: string, quantity: string, packetIds: string[], callerAccountKey: string): Promise<any> {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [harvestId, batchId, quantity, packetIds];
@@ -129,11 +126,10 @@ export class TeaSupplyChain {
     try {
       const contractInstance = this.getContractInstance(callerAccountKey);
       const payload = [consignmentId, batchIds, carrier, departureDate, eta];
-
       const res = await Utility.invokeContractPostMethod(contractInstance, 'createConsignment', payload, this.currentUserAddress);
       this.clearUserAccount();
 
-      return res;
+      // return res;
     } catch (error) {
       logger.error(`Error in createConsignment: ${error.message}`);
       throw error;
@@ -161,4 +157,67 @@ export class TeaSupplyChain {
       throw error;
     }
   }
+
+  public async getPacketHistory(batchId: string): Promise<PacketHistory> {
+    try {
+      const payload = [batchId];
+      const contractInstance = this.getContractInstance(ADMIN_PK);
+      const res: any = await Utility.invokeContractGetMethod(contractInstance, 'getPacketHistory', payload);
+      this.clearUserAccount();
+      const packetHistory = {
+        harvestDetails: {
+          harvestId: res?.harvestDetails?.harvestId,
+          date: res?.harvestDetails?.date,
+          quality: res?.harvestDetails?.quality,
+          quantity: res?.harvestDetails?.quantity,
+          location: res?.harvestDetails?.location,
+          farmerId: res?.harvestDetails?.farmerId,
+          timestamp: res?.harvestDetails?.timestamp.toString(),
+        },
+        batchDetails: {
+          batchId: res?.batchDetails?.batchId,
+          harvestId: res?.batchDetails?.harvestId,
+          packetQuantity: res?.batchDetails?.packetQuantity,
+          packetIds: res?.batchDetails?.packetIds,
+        },
+        consignmentDetails: {
+          consignmentId: res?.consignmentDeails?.consignment.consignmentId,
+          batchIds: res?.consignmentDeails?.consignment.batchIds,
+          carrier: res?.consignmentDeails?.consignment.carrier,
+          departureDate: res?.consignmentDeails?.consignment.departureDate,
+          eta: res?.consignmentDeails?.consignment?.eta,
+          timestamp: res?.consignmentDeails?.consignment?.timestamp.toString(),
+          otherDetails: {
+            temperature: res?.consignmentDeails?.otherDetails.temperature,
+            humidity: res?.consignmentDeails?.otherDetails.humidity,
+            status: res?.consignmentDeails?.otherDetails.status.toString(),
+            timestamp: res?.consignmentDeails?.otherDetails.timestamp.toString(),
+          },
+        },
+      };
+
+      console.log('Packet Hisotry', packetHistory);
+
+      return packetHistory;
+    } catch (error) {
+      logger.error(`Error in updateConsignment: ${error.message}`);
+      throw error;
+    }
+  }
 }
+
+class Singleton {
+  private static instance: TeaSupplyChain;
+
+  constructor() {
+    if (!Singleton.instance) {
+      Singleton.instance = new TeaSupplyChain();
+    }
+  }
+
+  getInstance() {
+    return Singleton.instance;
+  }
+}
+
+export { Singleton as TeaSupplyChain };

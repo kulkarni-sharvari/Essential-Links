@@ -1,4 +1,3 @@
-import { GAS_LIMIT } from '@/config';
 import { logger } from '@/utils/logger';
 
 export class Utility {
@@ -12,8 +11,7 @@ export class Utility {
       } else {
         contractResponse = await contractInstance.methods[method](...payload).call();
       }
-
-      return contractResponse.toString();
+      return contractResponse;
     } catch (error) {
       logger.error(`Error in invokeContractGetMethod for method: ${method} with payload: ${JSON.stringify(payload)} - ${error.message}`);
       throw error; // Re-throw the error to be handled by the caller
@@ -23,12 +21,14 @@ export class Utility {
   static async invokeContractPostMethod(contractInstance: any, method: string, payload: any[], senderAddress: string): Promise<any> {
     logger.info(`Invoking invokeContractPostMethod with method: ${method} and input: ${JSON.stringify(payload)} from sender: ${senderAddress}`);
     try {
+      const gas = await contractInstance.methods[method](...payload).estimateGas({ from: senderAddress });
       const txObject = {
         from: senderAddress,
-        gas: GAS_LIMIT,
+        gas: gas,
       };
 
-      return await contractInstance.methods[method](...payload).send(txObject);
+      const res = await contractInstance.methods[method](...payload).send(txObject);
+      return res.transactionHash.toString();
     } catch (error) {
       logger.error(
         `Error in invokeContractPostMethod for method: ${method} with payload: ${JSON.stringify(payload)} from sender: ${senderAddress} - ${

@@ -7,9 +7,6 @@ import { HttpException } from '@exceptions/HttpException';
 import { RequestWithUser, DataStoredInToken } from '@interfaces/auth.interface';
 
 const getAuthorization = req => {
-  const cookie = req.cookies['Authorization'];
-  if (cookie) return cookie;
-
   const header = req.header('Authorization');
   if (header) return header.split('Bearer ')[1];
 
@@ -22,16 +19,13 @@ export const AuthMiddleware = async req => {
     
     if (Authorization) {
       const { id } = verify(Authorization, SECRET_KEY) as DataStoredInToken;
-      //console.log("id from auth middleware ", id )
       const userRepository = getRepository(UserEntity);
       const findUser = await userRepository.findOne(id, { select: ['id', 'email', 'password', 'role'] });
-      //console.log("find user is ", findUser)
       return findUser;
     }
 
     return null;
   } catch (error) {
-   // console.log(error.stack)
     throw new HttpException(401, 'Wrong authentication token');
   }
 };

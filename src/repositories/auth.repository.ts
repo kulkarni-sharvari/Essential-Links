@@ -1,92 +1,121 @@
-/**
- * This code defines an authentication repository (`AuthRepository`) using TypeORM, which handles user sign-up, login, and logout functionalities in an application
- */
-
 import { hash, compare } from 'bcrypt';
-//  Imports the `sign` function from the `jsonwebtoken` library, used to create JSON Web Tokens (JWTs).
 import { sign } from 'jsonwebtoken';
-// used to create custom repositories
 import { EntityRepository } from 'typeorm';
 import { SECRET_KEY } from '@config';
-// a class  which validates and handle user data when creating a new user.
 import { CreateUserDto, UserLoginDto } from '@dtos/users.dto';
-// a class which represents the user table in the database.
 import { UserEntity } from '@entities/users.entity';
-// a class which handles HTTP exceptions
+import { WalletEntity } from '@/entities/wallet.entity';
 import { HttpException } from '@exceptions/HttpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { JWTToken } from '@/typedefs/jwtuser.type';
-
 import { CreateWallet } from '@/services/createWallet';
-import { WalletEntity } from '@/entities/wallet.entity';
 import { CryptoUtil } from '@/utils/crypto';
+import { getConnection } from 'typeorm';
+import { Publisher } from '@/services/publisher.service';
+import { containsEnumKey } from '@/utils/getErrorFromEnums';
+import { DB_EXCEPTION_CODES, HTTP_STATUS_CODE } from '@/constants';
+import { DBException } from '@/exceptions/DBException';
+import { logger } from '@/utils/logger';
 
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
-// Method to creates a JWT for a user
+const publisher = new Publisher().getInstance();
+
+// Method to create a JWT for a user
 const createToken = (user: User): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: user.id, role: user.role };
-
-  const expiresIn: number = 60 * 60;
+  const expiresIn: number = 60 * 60; // Token expiry time
 
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
 };
 
-// creates a cookie string for storing the JWT
-const createCookie = (tokenData: TokenData): string => {
-  return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
-};
-
 @EntityRepository(UserEntity)
 export class AuthRepository {
-  // Method to creates a JWT for a user
-
+  /**
+   * Generates a JWT token for a user.
+   * @param userData - User login details.
+   * @returns JWT token data.
+   */
   public async getJWTToken(userData: CreateUserDto): Promise<JWTToken> {
     const user: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!user) throw new HttpException(409, `This email ${userData.email} was not found`);
+
     const isPasswordMatching: boolean = await compare(userData.password, user.password);
     if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
 
     const tokenData = createToken(user);
     return tokenData;
   }
-  public async userSignUp(userData: CreateUserDto): Promise<User> {
+
+  /**
+   * Handles user sign-up functionality.
+   * @param userData - User details for sign-up.
+   * @returns The created user data.
+   */
+
+  public async userSignUp(userData: CreateUserDto): Promise<String> {
+    const queryRunner = getConnection().createQueryRunner();
+
     try {
-      
-      const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
-      
-      if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-      const walletObj = new CreateWallet().createUserWallet();
+      // Create user data
+      await queryRunner.startTransaction();
       const hashedPassword = await hash(userData.password, 10);
+      const walletObj = new CreateWallet().createUserWallet();
       const encryptedKey = new CryptoUtil().encryptPrivateKey(walletObj.privateKey);
-      const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword, walletAddress: walletObj.address }).save();
-      await WalletEntity.create({ ...walletObj, privateKey: encryptedKey, userId: createUserData.id }).save();
-      //await WalletEntity.create({...walletObj, userId: createUserData.id}).save();
-      //TODO: call to registerUser function of smart contract
-      //TODO: ROLES mapping to numbers
-      // console.log("User Data", userData);
-      const res = await new TeaSupplyChain().registerUser(createUserData.walletAddress, createUserData.id.toString(), userData.role);
-      console.log("tx Receipt", res.events.UserRegistered);
-      return createUserData;
+
+      const createUserData: User = await queryRunner.manager.save(UserEntity, {
+        ...userData,
+        password: hashedPassword,
+        walletAddress: walletObj.address,
+      });
+
+      // Create wallet data
+      await queryRunner.manager.save(WalletEntity, {
+        ...walletObj,
+        privateKey: encryptedKey,
+        userId: createUserData.id,
+      });
+
+      const payload = [createUserData.walletAddress, createUserData.id, userData.role];
+      const tx = {
+        methodName: 'registerUser',
+        payload: payload,
+        userId: createUserData.id,
+        entityId: createUserData.id
+      };
+      await queryRunner.commitTransaction();
+      return await publisher.publish(tx);
     } catch (error) {
-      
+      await queryRunner.rollbackTransaction();
+      logger.error('Error in processingCreate method:', error);
+      const x = containsEnumKey(DB_EXCEPTION_CODES,error.message)
+      throw new DBException(HTTP_STATUS_CODE.BAD_REQUEST, DB_EXCEPTION_CODES[x]);
+    } finally {
+      await queryRunner.release();
     }
-    
   }
 
-  public async userLogIn(userData: UserLoginDto): Promise<{ cookie: string; findUser: User; tokenData: TokenData }> {
+  /**
+   * Handles user login functionality.
+   * @param userData - User login details.
+   * @returns Object containing user data, and token data.
+   */
+  public async userLogIn(userData: UserLoginDto): Promise<{ findUser: User; tokenData: TokenData }> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
 
     const isPasswordMatching: boolean = await compare(userData.password, findUser.password);
-    if (!isPasswordMatching) throw new HttpException(409, 'Password is not matching');
+    if (!isPasswordMatching) throw new HttpException(409, 'Invalid credentials. Eithor email or password is incorrect');
 
     const tokenData = createToken(findUser);
-    const cookie = createCookie(tokenData);
 
-    return { cookie, findUser, tokenData };
+    return { findUser, tokenData };
   }
 
+  /**
+   * Handles user logout functionality.
+   * @param userId - The ID of the user logging out.
+   * @returns The user data.
+   */
   public async userLogOut(userId: number): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { id: userId } });
     if (!findUser) throw new HttpException(409, "User doesn't exist");

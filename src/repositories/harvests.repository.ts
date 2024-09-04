@@ -3,11 +3,12 @@ import { TeaHarvestsEntity } from '@/entities/harvests.entity';
 import { DBException } from '@/exceptions/DBException';
 import { User } from '@/interfaces/users.interface';
 import { TeaHarvests } from '@/typedefs/teaHarvests.type';
-import { TeaSupplyChain } from '@/services/blockchain/teaSupplyChain.service';
+import { getConnection } from 'typeorm';
 
 import { EntityRepository } from 'typeorm';
-
-import { v4 as uuidv4 } from 'uuid';
+import uniqid from 'uniqid';
+import { Publisher } from '@/services/publisher.service';
+const publisher = new Publisher().getInstance();
 
 @EntityRepository(TeaHarvestsEntity)
 export class TeaHarvestsRepository {
@@ -16,20 +17,39 @@ export class TeaHarvestsRepository {
    * @param harvestInput takes harvest input object to create record in db
    * @returns updated row in db
    */
-  async harvestCreate(harvestInput: TeaHarvestsDto, userWallet: any): Promise<TeaHarvests> {
-    const harvestId = uuidv4();
+  async harvestCreate(harvestInput: TeaHarvestsDto, userId: number): Promise<string> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.startTransaction();
+
+    const harvestId = uniqid();
     try {
-      const createHarvestData: TeaHarvestsEntity = await TeaHarvestsEntity.create({
+      const createHarvestData: TeaHarvestsEntity = await queryRunner.manager.save(TeaHarvestsEntity, {
         ...harvestInput,
         harvestId,
-      }).save();
-      const date = new Date(createHarvestData.createdAt).getTime();
-      const { quality, quantity, location } = createHarvestData;
-      const result = await new TeaSupplyChain().recordHarvest(harvestId, date.toString(), quality, quantity.toString(), location, userWallet.privateKey);
-      console.log(" Result", result);
-      return createHarvestData;
+        userId,
+      });
+      const payload = [
+        harvestId,
+        createHarvestData.createdAt.toISOString(),
+        createHarvestData.quality,
+        createHarvestData.quantity.toString(),
+        createHarvestData.location,
+      ];
+      const tx = {
+        methodName: 'recordHarvest',
+        payload: payload,
+        userId: userId,
+        entityId: harvestId
+      };
+      
+      await queryRunner.commitTransaction();
+      return await publisher.publish(tx);
     } catch (error) {
-      throw new DBException(500, error);
+      await queryRunner.rollbackTransaction();
+      console.error(`Error creating harvest: ${error.message}`, { harvestInput, harvestId });
+      throw new DBException(500, 'Failed to create harvest');
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -62,7 +82,11 @@ export class TeaHarvestsRepository {
    * @returns all the harvests done by a user
    */
   async readAllHarvestByFarmerId(user: User): Promise<TeaHarvests[]> {
-    const allHarvests = await TeaHarvestsEntity.find({ where: { userId: user.id } });
-    return allHarvests;
+    try {
+      const allHarvests = await TeaHarvestsEntity.find({ where: { userId: user.id } });
+      return allHarvests;
+    } catch (err) {
+      throw new DBException(500, err);
+    }
   }
 }
