@@ -1,56 +1,144 @@
-//  Imports the `hash` function from `bcrypt`, which is used to encrypt passwords before storing them in the database
 import { hash } from 'bcrypt';
-// Imports the `EntityRepository` decorator from TypeORM, which is used to define custom repository classes
 import { EntityRepository } from 'typeorm';
-// Imports the data transfer object
-import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
-// Imports the `UserEntity` class, which represents the user table in the database.
+import { CreateUserDto } from '@dtos/users.dto';
 import { UserEntity } from '@entities/users.entity';
-import { HttpException } from '@exceptions/httpException';
-import { User } from '@interfaces/users.interface';
+import { HttpException } from '@exceptions/HttpException';
+import { User } from '@typedefs/users.type';
+import { TransactionEntity } from '@/entities/transaction.entity';
+import { TeaHarvests } from '@/typedefs/teaHarvests.type';
+import { Processing } from '@/typedefs/processing.type';
+import { Batches } from '@/typedefs/batches.type';
+import { Transaction } from '@/typedefs/transaction.type';
+import { TeaHarvestsEntity } from '@/entities/harvests.entity';
+import { ProcessingEntity } from '@/entities/processing.entity';
+import { PacketsEntity } from '@/entities/packets.entity';
+import { ConsignmentOutput } from '@/typedefs/consignment.type';
+import { ConsignmentEntity } from '@/entities/consignment.entity';
+import { EnvironmentEntity } from '@/entities/environment.entity';
+import { Environment } from '@/typedefs/environment.type';
 
 @EntityRepository(UserEntity)
 // A class that handles various user-related database operations
 export class UserRepository {
   public async userFindAll(): Promise<User[]> {
     const users: User[] = await UserEntity.find();
-
     return users;
   }
 
   public async userFindById(userId: number): Promise<User> {
     const user: User = await UserEntity.findOne({ where: { id: userId } });
     if (!user) throw new HttpException(409, "User doesn't exist");
-
     return user;
   }
 
   public async userCreate(userData: CreateUserDto): Promise<User> {
     const findUser: User = await UserEntity.findOne({ where: { email: userData.email } });
     if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-
     const hashedPassword = await hash(userData.password, 10);
     const createUserData: User = await UserEntity.create({ ...userData, password: hashedPassword }).save();
-
     return createUserData;
   }
 
-  public async userUpdate(userId: number, userData: UpdateUserDto): Promise<User> {
-    const findUser: User = await UserEntity.findOne({ where: { id: userId } });
-    if (!findUser) throw new HttpException(409, "User doesn't exist");
+  public async getRequestDetails(
+    requestId: string,
+  ): Promise<User | TeaHarvests | Transaction | Processing | Batches | ConsignmentOutput[] | Environment> {
+    const findRequest: Transaction = await TransactionEntity.findOne({ where: { requestId: requestId } });
+    if (!findRequest) throw new HttpException(409, `Request Id ${requestId} does not exists`);
+    if (findRequest.status !== 'COMPLETED') {
+      const tx = new Transaction();
+      tx.userId = findRequest.userId;
+      tx.methodName = findRequest.methodName;
+      tx.status = findRequest.status;
+      tx.payload = findRequest.payload;
+      tx.requestId = findRequest.requestId;
+      tx.txHash = findRequest.txHash;
+      tx.updatedAt = findRequest.updatedAt;
+      tx.createdAt = findRequest.createdAt;
+      tx.entityId = findRequest.entityId;
+      tx.errorMessage = findRequest.errorMessage;
+      return tx;
+    }
 
-    const hashedPassword = await hash(userData.password, 10);
-    await UserEntity.update(userId, { ...userData, password: hashedPassword });
+    switch (findRequest.methodName) {
+      case 'registerUser':
+        const findUser: User = await UserEntity.createQueryBuilder('user')
+          .select(['user.id', 'user.email', 'user.role', 'user.location', 'user.walletAddress'])
+          .where('user.id = :id', { id: findRequest.userId })
+          .getOne();
+        let user = new User();
+        user.id = findUser.id;
+        user.email = findUser.email;
+        user.location = findUser.location;
+        user.role = findUser.role;
+        user.walletAddress = findUser.walletAddress;
+        user.blockchainHash = findRequest.txHash;
+        return user;
 
-    const updateUser: User = await UserEntity.findOne({ where: { id: userId } });
-    return updateUser;
-  }
+      case 'recordHarvest':
+        const findHarvest: TeaHarvests = await TeaHarvestsEntity.findOne({ where: { harvestId: findRequest.entityId } });
+        console.log('HArvest', findHarvest);
+        let harvest = new TeaHarvests();
+        harvest.harvestId = findHarvest.harvestId;
+        harvest.quality = findHarvest.quality;
+        harvest.quantity = findHarvest.quantity;
+        harvest.userId = findHarvest.userId;
+        harvest.location = findHarvest.location;
+        harvest.blockchainHash = findHarvest.blockchainHash;
+        harvest.createdAt = findHarvest.createdAt;
+        return harvest;
 
-  public async userDelete(userId: number): Promise<User> {
-    const findUser: User = await UserEntity.findOne({ where: { id: userId } });
-    if (!findUser) throw new HttpException(409, "User doesn't exist");
+      case 'recordProcessing':
+        const findProcessing: Processing = await ProcessingEntity.findOne({ where: { harvestId: findRequest.entityId } });
+        let processing = new Processing();
+        processing.harvestId = findProcessing.harvestId;
+        processing.processType = findProcessing.processType;
+        processing.packagingPlantId = findProcessing.packagingPlantId;
+        processing.blockchainHash = findRequest.txHash;
+        return processing;
 
-    await UserEntity.delete({ id: userId });
-    return findUser;
+      case 'createBatch':
+        const findBatches = await PacketsEntity.find({ where: { batchId: findRequest.entityId } });
+        const packageIds = findBatches.map(item => item.packageId);
+        let batch = new Batches();
+        batch.batchId = findRequest.entityId;
+        batch.packetWeight = '50gms';
+        batch.packages = packageIds;
+        batch.blockchainHash = findRequest.txHash;
+        return batch;
+
+      case 'createConsignment':
+        console.log('createConsignment', findRequest);
+        const findConsignment = await ConsignmentEntity.find({ where: { shipmentId: findRequest.entityId } });
+        const consignments: ConsignmentOutput[] = findConsignment.map(c => {
+          let temp = new ConsignmentOutput();
+          temp.batchId = c.batchId;
+          temp.blockchainHash = c.blockchainHash || null;
+          temp.carrier = c.carrier;
+          temp.createdAt = c.createdAt;
+          temp.departureDate = c.departureDate;
+          temp.expectedArrivalDate = c.expectedArrivalDate;
+          temp.shipmentId = c.shipmentId;
+          temp.status = c.status;
+          temp.storagePlantId = c.storagePlantId;
+          temp.updatedAt = c.updatedAt;
+
+          return temp;
+        });
+        return consignments;
+
+      case 'updateConsignment':
+        const findEnvDetails = await EnvironmentEntity.findOne({ where: { shipmentId: findRequest.entityId } });
+        let envDetails = new Environment();
+        envDetails.shipmentId = findRequest.entityId;
+        envDetails.humidity = findEnvDetails.humidity;
+        envDetails.temperature = findEnvDetails.temperature;
+        envDetails.track = findEnvDetails.track;
+        envDetails.updatedAt = findEnvDetails.updatedAt;
+        envDetails.blockchainHash = findRequest.txHash;
+        return envDetails;
+
+      default:
+        break;
+    }
   }
 }

@@ -3,7 +3,7 @@ import { join } from 'path';
 import winston from 'winston';
 import winstonDaily from 'winston-daily-rotate-file';
 import { LOG_DIR } from '@config';
-import { HttpException } from '@exceptions/httpException';
+import { HttpException } from '@exceptions/HttpException';
 
 // logs dir
 const logDir: string = join(__dirname, LOG_DIR);
@@ -57,11 +57,6 @@ logger.add(
   }),
 );
 
-export const responseLogger = request => {
-  const { query } = request.request;
-  logger.info(query);
-};
-
 export const errorLogger = error => {
   const { validationErrors } = error.extensions.exception;
 
@@ -73,5 +68,6 @@ export const errorLogger = error => {
   }
 
   logger.error(message);
-  throw new HttpException(400, message);
+  return {status: error.status, message: error.message}
+  // throw new HttpException(400, message);
 };

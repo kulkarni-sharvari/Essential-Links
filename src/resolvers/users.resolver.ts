@@ -1,13 +1,15 @@
-import { Arg, Mutation, Query, Resolver } from 'type-graphql';
-// Import a classes which define the structure and validation rules for creating and updating user data.
-import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
-// Imports the `UserRepository` class, which contains methods for interacting with the user data in the database
+import { Arg, Query, Resolver } from 'type-graphql';
 import { UserRepository } from '@repositories/users.repository';
-// Imports the `User` type, which defines the structure of a user object in the system
 import { User } from '@typedefs/users.type';
+import { RequestStatusResultUnion } from '@/typedefs/requestStatus.type';
+import { Transaction } from '@/typedefs/transaction.type';
+import { TeaHarvests } from '@/typedefs/teaHarvests.type';
+import { Processing } from '@/typedefs/processing.type';
+import { Batches } from '@/typedefs/batches.type';
+import { ConsignmentOutput } from '@/typedefs/consignment.type';
+import { Environment } from '@/typedefs/environment.type';
 
 @Resolver()
-// makes the below class as GraphQL resolver.
 
 // The `UserResolver` class is a GraphQL resolver that extends the `UserRepository` class. It provides several GraphQL queries and mutations for managing users
 export class UserResolver extends UserRepository {
@@ -29,29 +31,33 @@ export class UserResolver extends UserRepository {
     return user;
   }
 
-  // Defines a GraphQL mutation named `createUser` that returns a `User` object.
-  @Mutation(() => User, {
-    description: 'User create',
+  @Query(() => RequestStatusResultUnion, {
+    description: 'Get Request Details by Id',
   })
-  async createUser(@Arg('userData') userData: CreateUserDto): Promise<User> {
-    const user: User = await this.userCreate(userData);
-    return user;
-  }
+  async getRequestStatus(@Arg('requestId') requestId: string): Promise<RequestStatusResultUnion> {
+    const result = await this.getRequestDetails(requestId);
 
-  // Defines a GraphQL mutation named `updateUser` that returns a `User` object.
-  @Mutation(() => User, {
-    description: 'User update',
-  })
-  async updateUser(@Arg('userId') userId: number, @Arg('userData') userData: UpdateUserDto): Promise<User> {
-    const user: User = await this.userUpdate(userId, userData);
-    return user;
-  }
-  // Defines a GraphQL mutation named `deleteUser` that returns a `User` object
-  @Mutation(() => User, {
-    description: 'User delete',
-  })
-  async deleteUser(@Arg('userId') userId: number): Promise<User> {
-    const user: User = await this.userDelete(userId);
-    return user;
+    if (result instanceof User) {
+      return new RequestStatusResultUnion({ userDetails: result });
+    } else if (result instanceof TeaHarvests) {
+      return new RequestStatusResultUnion({ harvestDetails: result });
+    } else if (result instanceof Transaction) {
+      return new RequestStatusResultUnion({ transactionDetails: result });
+    } else if (result instanceof Processing) {
+      return new RequestStatusResultUnion({ processingDetails: result });
+    } else if (result instanceof Batches) {
+      return new RequestStatusResultUnion({ batchDetails: result });
+    } else if (result instanceof Environment) {
+      return new RequestStatusResultUnion({ environmentDetails: result });
+    } else if (Array.isArray(result)) {
+      if(result[0] instanceof ConsignmentOutput)
+      return new RequestStatusResultUnion({ consignmentDetails: result });
+    }
+
+    // to-do add consignment calls
+
+    // to-do add batch calls
+
+    return new RequestStatusResultUnion(); // return an empty instance if no match
   }
 }
