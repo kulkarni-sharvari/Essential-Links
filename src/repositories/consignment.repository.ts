@@ -14,7 +14,6 @@ const publisher = new Publisher().getInstance();
 @EntityRepository(ConsignmentEntity)
 @EntityRepository(EventEntity)
 export class ConsignmentRepository {
-  
   async consignmentCreate(consignments: ConsignmentDto, userData: any): Promise<string> {
     const shipmentId = uniqid();
 
@@ -32,14 +31,8 @@ export class ConsignmentRepository {
     });
     try {
       // bulk insert into DB
-      await ConsignmentEntity
-      .createQueryBuilder()
-      .insert()
-      .into(ConsignmentEntity)
-      .values(newConsignments)
-      .execute();
-      logger.info('Created new consignment');
-      
+      await ConsignmentEntity.createQueryBuilder().insert().into(ConsignmentEntity).values(newConsignments).execute();
+
       // query DB with said {shipmentId}
       await this.getAllConsignmentByID(shipmentId);
       const batchIds = consignments.batchId.map(batch => batch.toString());
@@ -61,7 +54,7 @@ export class ConsignmentRepository {
       return await publisher.publish(tx);
     } catch (error) {
       logger.error(`ERROR - creating new consignment ${error}`);
-      throw new DBException(500, error)
+      throw new DBException(500, error);
     }
   }
 
@@ -164,37 +157,43 @@ export class ConsignmentRepository {
     return await EnvironmentEntity.find({ where: { shipmentId } });
   }
 
-  
   async getPacketHistory(batchId: string) {
     try {
-      const resultArray = []
+      const resultArray = [];
+
+      let shipmentId;
       const shipment = await ConsignmentEntity.findOne({ select: ['shipmentId'], where: { batchId: batchId } });
-      const shipmentId =  shipment.shipmentId
+      if (!shipment || shipment === null || shipment === undefined) {
+        shipmentId = '';
+      } else {
+        shipmentId = shipment.shipmentId;
+      }
+
       const allBatchRecords = await EventEntity.createQueryBuilder('ee')
-                                          .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
-                                          .where(`ee."eventDetails"->>'batchId' = :batchId`, { batchId })
-                                          .getMany();
-                        
-      resultArray.push(...allBatchRecords)
+        .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
+        .where(`ee."eventDetails"->>'batchId' = :batchId`, { batchId })
+        .getMany();
+
+      resultArray.push(...allBatchRecords);
 
       const shipmentRecords = await EventEntity.createQueryBuilder('ee')
-                                                .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
-                                                .where(`ee."eventDetails"->>'shipmentId' = :shipmentId`, { shipmentId })
-                                                .getMany();
-      resultArray.push(...shipmentRecords)                                        
-      const harvestId = (allBatchRecords.filter(batchrecord => batchrecord.eventName ===  'BatchCreated').map(record => record.eventDetails.harvestId))[0]
+        .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
+        .where(`ee."eventDetails"->>'shipmentId' = :shipmentId`, { shipmentId })
+        .getMany();
+      resultArray.push(...shipmentRecords);
+      const harvestId = allBatchRecords
+        .filter(batchrecord => batchrecord.eventName === 'BatchCreated')
+        .map(record => record.eventDetails.harvestId)[0];
 
       const allHarvestRecords = await EventEntity.createQueryBuilder('ee')
-                                                  .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
-                                                  .where(`ee."eventDetails"->>'harvestId' = :harvestId`, { harvestId })
-                                                  .getMany();
-      resultArray.push(...allHarvestRecords)
-      const uniqueArray = Array.from(
-        new Map(resultArray.map(item => [item.eventName, item])).values()
-      );
+        .select(['ee.eventDetails', 'ee.eventName', 'ee.blockchainHash', 'ee.createdAt'])
+        .where(`ee."eventDetails"->>'harvestId' = :harvestId`, { harvestId })
+        .getMany();
+      resultArray.push(...allHarvestRecords);
+      const uniqueArray = Array.from(new Map(resultArray.map(item => [item.eventName, item])).values());
 
-      return (uniqueArray)
-    } catch(error) {
+      return uniqueArray;
+    } catch (error) {
       logger.error(`ERROR - fetching packet history for batchId ${batchId} ${error}`);
       throw new DBException(500, error);
     }
